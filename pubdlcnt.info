@@ -1,0 +1,4 @@
+; $Id:
+name = Public Download Count
+description = "Provides file download counter for the Drupal's public file system."
+core = 6.x
