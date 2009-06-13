@@ -22,17 +22,17 @@ This module does not modify the node data when it's stored to the database. Inst
 
 This module works with anchor tags that satisfies the following criterias.
 
- 1. The anchor tag must have URL with a file name at its end. It does not work with the anchor tags that end with directory name or slash (/) character.
+ 1. The anchor tag must have a URL with a file name at its end. It does not work with the anchor tags that end with directory name or slash (/) character.
 
- 2. The anchor tag must not have query string. For example, following anchor tag is ignored by this module. <a href="http://myserver.com/path/program.php?param1=XXXXX&param2=YYYYY>
+ 2. The anchor tag must not have any query string. For example, following anchor tag is ignored by this module. <a href="http://myserver.com/path/program.php?param1=XXXXX&param2=YYYYY>
 
  3. The anchor tag must not have 'rel=lightbox...' attribute which means that it is the anchor to an image to be handled by the lightbox module to avoid the conflict problem with the lightbox module. (thickbox and shadowbox too)
 
- 4. The anchor tag must have a file name with a valid file name extension. Valid file name extesions can be customized at the module's setting page. 
+ 4. The anchor tag must have a file name with a valid file name extension. Valid file name extesions can be customized at the module's configuration page. 
 
  5. The anchor tag must not have a file path to the private file system (which includes /system/files in its path).
 
- 6. The anchor tag must be in a node, not in a comment. This module does not handle anchor tags in the comments.
+ 6. The anchor tag must be in nodes, not in comments. This module does not handle anchor tags in comments.
 
 
 How it works
