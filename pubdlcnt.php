@@ -43,8 +43,8 @@ chdir($current_dir);
 /**
  * Step-2: get file query value (URL of the actual file to be downloaded)
  */
-$url = check_url($HTTP_GET_VARS['file']);
-$nid = check_url($HTTP_GET_VARS['nid']);
+$url = check_url($_GET['file']);
+$nid = check_url($_GET['nid']);
 
 if (!eregi("^(f|ht)tps?:\/\/.*", $url)) { // check if this is absolute URL 
   // if the URL is relative, then convert it to absolute
