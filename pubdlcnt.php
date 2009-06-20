@@ -91,7 +91,10 @@ function is_valid_file_url($url) {
   if (preg_match('/\/$/', $url)) {
     return false;
   }
-
+  // in case of FTP, we just return TRUE (the file exists)
+  if (preg_match('/ftps?:\/\/.*/i', $url)) {
+    return true;
+  }
   // extract file name and extention
   $filename = basename($url);
   $extension = explode(".", $filename);
