@@ -29,9 +29,21 @@
 
 $current_dir = getcwd();
 
-// Change the following line based on the location of this module directory
-chdir('../../../../'); // go to drupal root
-
+// we need to change the current directory to the (drupal-root) directory
+// in order to include some necessary files.
+if (file_exists('../../../../includes/bootstrap.inc')) {
+  // If this script is in the (drupal-root)/sites/(site)/modules/pubdlcnt directory
+  chdir('../../../../'); // go to drupal root
+}
+else if (file_exists('../../includes/bootstrap.inc')) {
+  // If this script is in the (drupal-root)/modules/pubdlcnt directory
+  chdir('../../'); // go to drupal root
+}
+else {
+  // Non standard location, give up counting and just fetch the target file
+  header('Location: ' . $_GET['file']);
+  exit;
+}
 include_once './includes/bootstrap.inc';
 // following two lines are needed for check_url() and valid_url() call
 include_once './includes/common.inc';
@@ -43,8 +55,8 @@ chdir($current_dir);
 /**
  * Step-2: get file query value (URL of the actual file to be downloaded)
  */
-$url = check_url($HTTP_GET_VARS['file']);
-$nid = check_url($HTTP_GET_VARS['nid']);
+$url = check_url($_GET['file']);
+$nid = check_url($_GET['nid']);
 
 if (!eregi("^(f|ht)tps?:\/\/.*", $url)) { // check if this is absolute URL 
   // if the URL is relative, then convert it to absolute
