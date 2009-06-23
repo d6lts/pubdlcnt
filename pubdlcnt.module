@@ -191,6 +191,10 @@ function _pubdlcnt_count_bar($count, $max) {
 function pubdlcnt_nodeapi(&$node, $op, $a3, $a4) {
   switch ($op) {
     case 'alter':
+      if($node->nid == '') {
+        // preview - we do nothing and just return
+        return;
+      }
       $node->body = _filter_pubdlcnt($node->body, $node->nid);
       $node->teaser  = _filter_pubdlcnt($node->teaser, $node->nid);
       break;

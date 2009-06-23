@@ -40,9 +40,17 @@ else if (file_exists('../../includes/bootstrap.inc')) {
   chdir('../../'); // go to drupal root
 }
 else {
-  // Non standard location, give up counting and just fetch the target file
-  header('Location: ' . $_GET['file']);
-  exit;
+  // Non standard location: you need to edit the line below so that chdir()
+  // command change the directory to the drupal root directory of your server
+  // using an absolute path.
+  chdir('/absolute-path-to-drupal-root/'); // <---- edit this line!
+
+  if (!file_exits('./includes/bootstrap.inc')) {
+    // We can not locate the bootstrap.inc file, let's give up using the
+    // script and just fetch the file
+    header('Location: ' . $_GET['file']);
+    exit;
+  }
 }
 include_once './includes/bootstrap.inc';
 // following two lines are needed for check_url() and valid_url() call
@@ -90,6 +98,10 @@ function is_valid_file_url($url) {
   // URL end with slach (/) and no file name
   if (preg_match('/\/$/', $url)) {
     return false;
+  }
+  // in case of FTP, we just return TRUE (the file exists)
+  if (preg_match('/ftps?:\/\/.*/i', $url)) {
+    return true;
   }
 
   // extract file name and extention
