@@ -43,6 +43,8 @@ else {
   // Non standard location: you need to edit the line below so that chdir()
   // command change the directory to the drupal root directory of your server
   // using an absolute path.
+  // First, please delete the line below and then edit the next line
+  print "Error: Public Download Count module failed to work. The file pubdlcnt.php requires manual editing.\n";
   chdir('/absolute-path-to-drupal-root/'); // <---- edit this line!
 
   if (!file_exits('./includes/bootstrap.inc')) {
