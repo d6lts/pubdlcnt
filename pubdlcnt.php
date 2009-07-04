@@ -94,6 +94,10 @@ exit;
  * Function to check if the specified file URL is valid or not
  */
 function is_valid_file_url($url) {
+  // replace space characters in the URL with '%20' to support file name
+  // with space characters
+  $url = preg_replace('/\s/', '%20', $url);
+
   if (!valid_url($url, true)) {
     return false;
   }
@@ -146,7 +150,7 @@ function url_exits($url) {
   // URL exits              'HTTP/1.1 200 OK'
   // URL does not exits     'HTTP/1.1 404 Not Found'
   // Can not access URL     'HTTP/1.1 403 Forbidden'
-   // Can not access server  'HTTP/1.1 500 Internal Server Error
+  // Can not access server  'HTTP/1.1 500 Internal Server Error
   // 
   // So we return true only when 'HTTP/1.1 200 OK' is returned
   if (strstr($header[0], '200')) {
