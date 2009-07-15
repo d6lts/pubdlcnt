@@ -238,6 +238,8 @@ function pubdlcnt_counter_form(&$form_state) {
     foreach ($params as $param) {
       if (preg_match("/file=(.*)/", $param, $match)) {
         $name = check_url($match[1]);
+        // convert '%20' back to space characters
+        $name = preg_replace('/%20/', ' ', $name);
       }
       if (preg_match("/year=(.*)/", $param, $match)) {
         $tgt_y = (int)($match[1]);
