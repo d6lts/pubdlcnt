@@ -27,7 +27,7 @@ define("MONTHLY", 2);
 function _language_prefix() {
   global $language;
 
-  if ($language->prefix != '') {
+  if ($language->prefix != '' && variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE) != LANGUAGE_NEGOTIATION_NONE) {
     return $language->prefix . '/';
   }
   return '';
