@@ -22,26 +22,27 @@ define("DAILY", 1);
 define("MONTHLY", 2);
 
 /**
- * Returns languae prefix
+ * API for external modules and themes
  */
-function _language_prefix() {
-  global $language;
+function pubdlcnt_filter($text, $nid) {
+  // return if $nid is not specified
+  if(!$nid) return $text;
 
-  if ($language->prefix != '' && variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE) != LANGUAGE_NEGOTIATION_NONE) {
-    return $language->prefix . '/';
-  }
-  return '';
+  return _filter_pubdlcnt($text, $nid);
 }
 
 /**
  * Parse whole node data and filter valid anchor tags
  */
 function _filter_pubdlcnt($text, $nid) {
+  // return if $nid is not specified
+  if(!$nid) return $text;
+ 
   // 1. cross-platform line breaks to UNIX line breaks
   $text = str_replace(array("\r\n", "\r"), "\n", $text);
 
   // 2. convert anchor tag
-  $text = preg_replace('/(<a.*?>)(.*?)(<\/a>)/ise', "_replace_anchor_url('$0', '$1', '$2', '$3', $nid)", $text);
+  $text = preg_replace('/(<a.*?>)(.*?)(<\/a>)/ise', "_pubdlcnt_replace_anchor_url('$0', '$1', '$2', '$3', $nid)", $text);
 
   return $text;
 }
@@ -56,18 +57,19 @@ function _filter_pubdlcnt($text, $nid) {
  *  4. URL with file name + invalid extension
  *  5. URL wilth private file system path - http://server/system/files/dir/filename
  *
- * So, only the URL with file name with valid extension can be processed.
+ * So, only the URLs with file name with valid extension can be processed.
  *
+ *  -- case 1: absolute URL --
  *  IN:  <a href="http://server/dir1/dir2/sample.zip" title="sample">Sample</a>
  *  OUT: <a href="http://drupalserver/path/pubdlcnt.php?file=http://server/dir1/dir2/sample.zip" title="sample">Sample</a>
+ *
+ *  -- case 2: relative URL (based on DocumentRoot) --
+ *  IN:  <a href="/dir1/dir2/sample.zip" title="sample">Sample</a>
+ *  OUT: <a href="http://drupalserver/path/pubdlcnt.php?file=/dir1/dir2/sample.zip" title="sample">Sample</a>
  */
-function _replace_anchor_url($all, $str1, $str2, $str3, $nid) {
-  // NOTE: double-quote character is escaped with backslash
-  //       used the following code to remove such backslash added
-  //
-  //       $str  = str_replace('\"','"',$str);
+function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
 
-  // Example: <a href=\"www.pixture.com/files/sample.zip\" title=\"Sample\">sample.zip</a>
+  // Example: <a href=\"http://www.pixture.com/files/sample.zip\" title=\"Sample\">sample.zip</a>
   // $all:  entire string
   // $str1: start anchor tag:  <a href=\"www.pixutre.com/files ... \"title=\"Sample\">
   // $str2: inbetween content: sample.zip
@@ -90,11 +92,11 @@ function _replace_anchor_url($all, $str1, $str2, $str3, $nid) {
   }
 
   preg_match('/(<a.*?href=["\'])(.*?)(["\'].*?>)/ise', $str1, $matches);
-  // Example: <a href=\"www.pixture.com/files/sample.zip\" title=\"Sample\">
+  // Example: <a href=\"http://www.pixture.com/files/sample.zip\" title=\"Sample\">
   // $matches[0]: entire str1
-  // $matches[1]: first part of anchor tag:         <a href=\"
-  // $matches[2]: href content(URL) of anchor tag:  www.pixture.com/files/sample.zip
-  // $matches[3]: remainign part of anchor tag:     \" title=\"Sample\">
+  // $matches[1]: first part of anchor: <a href=\"
+  // $matches[2]: href content(URL)   : http://www.pixture.com/files/sample.zip
+  // $matches[3]: remainign part:       \" title=\"Sample\">
 
   // extract file name and file extension from the URL
   $path = explode("?", $matches[2]);
@@ -112,6 +114,7 @@ function _replace_anchor_url($all, $str1, $str2, $str3, $nid) {
   }
 
   $filename = basename($matches[2]);
+
   $extension = explode(".", $filename);
   $num = count($extension);
   if ($num > 1) {
@@ -124,26 +127,27 @@ function _replace_anchor_url($all, $str1, $str2, $str3, $nid) {
 
   $valid_extensions = variable_get('pubdlcnt_valid_extensions', '7z bz bz2 gz gzip hqx iso lha lzh pkg pdf rpm sea sit tar tbz tgz zip');
 
-  // check if the extension is a valid extension or not
-  $valid_ext_array = explode(" ", $valid_extensions);
-  if (!in_array($ext, $valid_ext_array)) {
-    // invalid extension
+  // check if the extension is a valid extension or not (case insensitive)
+  $s_valid_extensions = strtolower($valid_extensions);
+  $s_ext = strtolower($ext);
+  $s_valid_ext_array = explode(" ", $s_valid_extensions);
+  if (!in_array($s_ext, $s_valid_ext_array)) {
     return $all;
   }
-
+  
   // show total download count in nodes
   if (user_access('view total download count in nodes')) {
     if (user_access('administer public download count')) {
-      // total count with link to stastics page
+      // total count with link to statistics page
       $cnt = pubdlcnt_get_total_counter($filename);
-      $str3 = $str3 . ' <a href="' . base_path() . _language_prefix()
+      $str3 = $str3 . ' <a href="' . base_path() . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter?file='
             . $filename . '&mode=1">(' . $cnt . ')</a>';
-  }
-  else { // non admin
-    // total count only (no link)
-    $cnt = pubdlcnt_get_total_counter($filename);
-    $str3 = $str3 . ' (' . $cnt . ')';
+    }
+    else { // non admin
+      // total count only (no link)
+      $cnt = pubdlcnt_get_total_counter($filename);
+      $str3 = $str3 . ' (' . $cnt . ')';
     }
   }
   $matches[2] = base_path() . drupal_get_path('module', 'pubdlcnt') .
@@ -203,6 +207,8 @@ function pubdlcnt_nodeapi(&$node, $op, $a3, $a4) {
 
 /**
  * Form: General Configutation Settings
+ *
+ * @see pubdlcnt_general_form_validate()
  */
 function pubdlcnt_general_form() {
 
@@ -216,7 +222,24 @@ function pubdlcnt_general_form() {
     '#maxlength' => 255,
     '#description' => t('Separate extensions with a space and do not include the leading dot.'),
   );
+  $form['pubdlcnt_num_blocks'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of blocks'),
+    '#description' => t('The total number of independent blocks you want. Enter a number between 0 to 99. If you set this to 0, you will have no blocks created.'),
+    '#default_value' => variable_get('pubdlcnt_num_blocks', 1),
+    '#size' => 3,
+  );
   return system_settings_form($form);
+}
+
+/**
+ * Form validation: General Configuration Settings
+ */
+function pubdlcnt_general_form_validate($form, &$form_state) {
+  $number = $form_state['values']['pubdlcnt_num_blocks'];
+  if(!is_numeric($number) || strlen($number) > 2) {
+    form_set_error('pubdlcnt_num_blocks', t('You must enter a number from 0 to 99.'));
+  }
 }
 
 /**
@@ -309,12 +332,13 @@ function pubdlcnt_counter_form(&$form_state) {
       $row = array();
       $row[] = array('data' => $rec->total, 'align' => 'right');
       $row[] = array('data' => _pubdlcnt_count_bar($rec->total, $max), 'align' => 'left');
-      $row[] = array('data' => '<a href="' . base_path() . _language_prefix() . 'node/' . $rec->nid . '">' . $rec->name, 
+      $nid = _pubdlcnt_get_translated_node_id($nid);
+      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $rec->name, 
                                'align' => 'left', 'style' => 'padding-right: 20px');
       $row[] = array('data' => $dateonly,   'align' => 'left', 'style' => 'padding-right: 20px');
       $row[] = array('data' => '<a href="' 
             . base_path()
-            . _language_prefix()
+            . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter?file='
             . $rec->name
             . '&mode=1' // MODE_DETAIL
@@ -324,7 +348,7 @@ function pubdlcnt_counter_form(&$form_state) {
             . '&nbsp;&nbsp;|&nbsp;&nbsp;'
             . '<a href="'
             . base_path()
-            . _language_prefix()
+            . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter?file='
             . $rec->name
             . '&mode=2' // MODE_CONFIRM
@@ -508,7 +532,7 @@ function pubdlcnt_counter_form(&$form_state) {
         $row[] = array('data' => _pubdlcnt_count_bar($count, $max), 'align' => 'left');
         $row[] = array('data' => '<a href="' 
             . base_path()
-            . _language_prefix()
+            . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter?file='
             . $name
             . '&year='
@@ -755,5 +779,253 @@ function pubdlcnt_perm() {
   $perms = array();
   $perms[] = 'administer public download count';
   $perms[] = 'view total download count in nodes';
+  $perms[] = 'view total download count in block';
   return $perms;
+}
+
+/**
+ * Implementation of hook_theme()
+ *
+ * This will apply pubdlcnt filter to Views field
+ */
+function pubdlcnt_theme($existing, $type, $theme, $path) {
+  return array(
+    'views_view_field' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-field',
+      'original hook' => 'views_view_field',
+      'path' => drupal_get_path('module', 'pubdlcnt') . '/views',
+    ),
+    'top_download_list' => array(
+      'arguments' => array('count' => NULL, 'link' => NULL, 'period' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_block()
+ */
+function pubdlcnt_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    for ($i = 1 ; $i <= variable_get('pubdlcnt_num_blocks', 1) ; $i++) {
+      $blocks[$i]['info'] = t('Top Download !num', array('!num' => $i)); 
+      $blocks[$i]['cache'] = BLOCK_NO_CACHE;
+    }
+    return $blocks;
+  }
+  else if ($op == 'configure') {
+    $form['block_count_' . $delta] = array(
+      '#type' => 'textfield',
+      '#title' => t('Item count'),
+      '#default_value' => variable_get('pubdlcnt_block_count_' . $delta, 10),
+      '#size' => 3,
+      '#description' => t('The maxmum number of items to display. Use 0 to unlimit.'),
+    );
+    $form['block_link_' . $delta] = array(
+      '#type' => 'select',
+      '#title' => t('Item link'),
+      '#default_value' => variable_get('pubdlcnt_block_link_' . $delta, 1),
+      '#options' => array(
+        0 => t('No link'), 
+        1 => t('Link to node'),
+      ),
+      '#description' => t('Determines how the list of downloadable files are displayed'),
+    );
+    $form['block_period_' . $delta] = array(
+      '#type' => 'select',
+      '#title' => t('Counting Period'),
+      '#default_value' => variable_get('pubdlcnt_block_period_' . $delta, 0),
+      '#options' => array(
+        0 => t('All time'), 
+        1 => t('Last year'),
+        2 => t('This year'),
+        3 => t('Last month'),
+        4 => t('This month'),
+        5 => t('Last week'),
+        6 => t('This week'),
+        7 => t('Yesterday'),
+        8 => t('Today'),
+      ),
+      '#description' => t('Determines the time period of counting'),
+    );
+    return $form;
+  }
+  else if ($op == 'save') {
+    variable_set('pubdlcnt_block_count_'  . $delta, $edit['block_count_' . $delta]);
+    variable_set('pubdlcnt_block_link_'   . $delta, $edit['block_link_' . $delta]);
+    variable_set('pubdlcnt_block_period_' . $delta, $edit['block_period_' . $delta]);
+  }
+  else if ($op == 'view') {
+    $count  = variable_get('pubdlcnt_block_count_'  . $delta, 10);
+    $link   = variable_get('pubdlcnt_block_link_'   . $delta, 1);
+    $period = variable_get('pubdlcnt_block_period_' . $delta, 0);
+
+    $period_title = array(
+      t(''), 
+      t('Last year'),
+      t('This year'),
+      t('Last month'),
+      t('This month'),
+      t('Last week'),
+      t('This week'),
+      t('Yesterday'),
+      t('Today'),
+    );
+
+    $block['subject'] = t('Top Download') . ' ' . $period_title[$period];
+    $block['content'] = theme('top_download_list', $count, $link, $period);
+    return $block;
+  }
+}
+
+/**
+ * Theme function for block
+ */
+function theme_top_download_list($count = 10, $link = 1, $period = 0) {
+  $items = array();
+
+  $query = "SELECT name, nid, SUM(count) AS total FROM {pubdlcnt} ";
+  switch ($period) {
+    case 1: // Last year
+      $from = date("Y-m-d H:i:s", mktime(0, 0, 0, 1, 1, date("Y")-1));
+      $to   = date("Y-m-d H:i:s", mktime(0, 0, 0, 12, 31, date("Y")-1));
+      $query .= "WHERE date >= '" . $from . "' AND date <= '" . $to . "'";
+      break;
+    case 2: // This year
+      $from = date("Y-m-d H:i:s", mktime(0, 0, 0, 1, 1, date("Y")));
+      $query .= "WHERE date >= '" . $from . "'";
+      break;
+    case 3: // Last month
+      $from = date("Y-m-d H:i:s", mktime(0, 0, 0, date("m")-1, 1, date("Y")));
+      $to   = date("Y-m-d H:i:s", mktime(0, 0, 0, date("m")-1, 31, date("Y")));
+      $query .= "WHERE date >= '" . $from . "' AND date <= '" . $to . "'";
+      break;
+    case 4: // This month
+      $from = date("Y-m-d H:i:s", mktime(0, 0, 0, date("m"), 1, date("Y")));
+      $query .= "WHERE date >= '" . $from . "'";
+      break;
+    case 5: // Last week
+      $base = strtotime("-1 week");
+      $dow = date("w"); // 0=Sunday - 6=Saturday
+      $from = date("Y-m-d", $base - ((int)$dow * 86400)) . ' 00:00:00';
+      $to   = date("Y-m-d", $base + ((6 - (int)$dow) * 86400)) . ' 00:00:00';
+      $query .= "WHERE date >= '" . $from . "' AND date < '" . $to . "'";
+      break;
+    case 6: // This week
+      $dow = date("w"); // 0=Sunday - 6=Saturday
+      $from = date("Y-m-d", time() - ((int)$dow * 86400)) . ' 00:00:00';
+      $to   = date("Y-m-d", time() + ((6 - (int)$dow) * 86400)) . ' 00:00:00';
+      $query .= "WHERE date >= '" . $from . "' AND date < '" . $to . "'";
+      break;
+    case 7: // Yesterday
+      $from = date("Y-m-d H:i:s", mktime(0, 0, 0, date("m"), date("d")-1, date("Y")));
+      $query .= "WHERE date = '" . $from . "'";
+      break;
+    case 8: // Today
+      $from = date("Y-m-d") . ' 00:00:00';
+      $query .= "WHERE date = '" . $from . "'";
+      break;
+    case 0: // All time
+    default: 
+      break;
+  }
+  $query .= " GROUP BY name ORDER BY total DESC";
+  $result = db_query($query);
+
+  if ($count == 0) $count = 1000000; // no limit
+  for ($i = 0 ; $i < $count ; $i++) {
+    if ($rec = db_fetch_object($result)) {
+      $name = $rec->name;
+      if ($link == 1) {
+        $nid = _pubdlcnt_get_translated_node_id($rec->nid);
+        $name = '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $name . '</a>';
+      }
+      if (user_access('view total download count in block')) {
+        if (user_access('administer public download count')) {
+          // total count with link to statistics page
+          $name .= ' <a href="' . base_path() . _pubdlcnt_language_prefix() 
+                  . 'admin/reports/pubdlcnt/counter?file='
+                  . $rec->name . '&mode=1">(' . $rec->total . ')</a>';
+        }
+        else { // non admin
+          // total count only (no link)
+          $name .= ' (' . $rec->total . ')';
+        }
+      }
+      $item = array(
+        'data' => $name,
+        'class' => 'pubdlcnt_file',
+      );
+      $items[] = $item;
+    }
+    else {
+      break; // no more items
+    }
+  }
+  $output = theme('item_list', $items);
+  return $output;
+
+
+  $output = '<table id="pubdlcnt">';
+
+  $result = db_query("SELECT name, nid, SUM(count) AS total FROM {pubdlcnt} GROUP BY name ORDER BY total DESC");
+  for ($i = 0 ; $i < $count ; $i++) {
+    if ($rec = db_fetch_object($result)) {
+      $output .= '<tr>';
+      $output .= '<td class="pubdlcnt_file">' . $rec->name . '</td>';
+      $output .= '<td class="pubdlcnt_count">' . $rec->total . '</td>';
+      $output .= '</tr>';
+    }
+    else {
+      break; // no more items
+    }
+  }
+  $output .= '</table>';
+  return $output;
+}
+
+/**
+ * Returns languae prefix
+ */
+function _pubdlcnt_language_prefix() {
+  global $language;
+
+  if ($language->prefix != '' && variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE) != LANGUAGE_NEGOTIATION_NONE) {
+    return $language->prefix . '/';
+  }
+  return '';
+}
+
+/**
+ * Get node id of the current language (if any) 
+ */
+function _pubdlcnt_get_translated_node_id($nid) {
+  global $language;
+  $current_lang = $language->language;
+
+  $result = db_query(db_rewrite_sql('SELECT n.nid, n.tnid, n.language FROM {node} n WHERE n.nid = %d OR n.tnid = %d'), $nid, $nid);
+  if (db_affected_rows() > 1) {
+    // found multiple nodes
+    //   which means that the $nid was the node id of the primary language node
+    //   so the $result has nodes of all languages 
+  }
+  else {
+    // found only one page
+    //   which means that the $nid was the node id of the translated node
+    //   or the node id of a neutral language node (= no translation)
+    $node = db_fetch_object($result);
+    if($node->tnid == 0 || $node->language == '') {
+      // this is newtral language node
+      return $node->nid;
+    }
+    // now $node->tnid is the node id of the primary language node
+    // let's get nodes of all languages
+    $result = db_query(db_rewrite_sql('SELECT n.nid, n.tnid, n.language FROM {node} n WHERE n.tnid = %d'), $node->tnid);
+  }
+  while ($node = db_fetch_object($result)) {
+    if ($node->language == $current_lang) {
+      return $node->nid;
+    }
+  }
+  return $nid; // not found - return original $nid
 }

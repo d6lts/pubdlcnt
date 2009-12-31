@@ -124,14 +124,16 @@ function is_valid_file_url($url) {
 						WHERE name = 'pubdlcnt_valid_extensions'");
   $valid_extensions = unserialize(db_result($result));
   if (!empty($valid_extensions)) {
-    $valid_ext_array = explode(" ", $valid_extensions);
-    // invalid extension
-    if (!in_array($ext, $valid_ext_array)) {
+    // check if the extension is a valid extension or not (case insensitive)
+    $s_valid_extensions = strtolower($valid_extensions);
+    $s_ext = strtolower($ext);
+    $s_valid_ext_array = explode(" ", $s_valid_extensions);
+    if (!in_array($s_ext, $s_valid_ext_array)) {
       return false;
     }
   }
-
-  if (!url_exits($url)) {
+  
+  if (!url_exists($url)) {
     return false;
   }
   return true; // it seems that the file URL is valid
@@ -140,21 +142,34 @@ function is_valid_file_url($url) {
 /**
  * Function to check if the specified file URL really exists or not
  */
-function url_exits($url) {
-  if (!function_exists('get_headers')) {
-    return true;	// PHP4 
-  }
-  $header = get_headers($url);
-  // Here are popular status code back from the server
-  //
-  // URL exits              'HTTP/1.1 200 OK'
-  // URL does not exits     'HTTP/1.1 404 Not Found'
-  // Can not access URL     'HTTP/1.1 403 Forbidden'
-  // Can not access server  'HTTP/1.1 500 Internal Server Error
-  // 
-  // So we return true only when 'HTTP/1.1 200 OK' is returned
-  if (strstr($header[0], '200')) {
-    return true;
+function url_exists($url) {
+  $a_url = parse_url($url);
+  if (!isset($a_url['port'])) $a_url['port'] = 80;
+  $errno = 0;
+  $errstr = '';
+  $timeout = 30;
+  if (isset($a_url['host']) && $a_url['host'] != gethostbyname($a_url['host'])) {
+    $fid = @fsockopen($a_url['host'], $a_url['port'], $errno, $errstr, $timeout);
+    if (!$fid) return false;
+    $page = isset($a_url['path']) ? $a_url['path'] : '';
+    $page .= isset($a_url['query']) ? '?' . $a_url['query'] : '';
+    fputs($fid, 'HEAD ' . $page . ' HTTP/1.0' . "\r\n" . 'HOST: ' 
+        . $a_url['host'] . "\r\n\r\n");
+    $head = fread($fid, 4096);
+    $head = substr($head, 0, strpos($head, 'Connection: close'));
+    fclose($fid);
+    // Here are popular status code back from the server
+    //
+    // URL exits                  'HTTP/1.1 200 OK'
+    // URL exits (but redirected) 'HTTP/1.1 302 Found'
+    // URL does not exits         'HTTP/1.1 404 Not Found'
+    // Can not access URL         'HTTP/1.1 403 Forbidden'
+    // Can not access server      'HTTP/1.1 500 Internal Server Error
+    // 
+    // So we return true only when status 200 or 302
+    if (preg_match('#^HTTP/.*\s+[200|302]+\s#i', $head)) {
+      return $pos !== false;
+    }
   }
   return false;
 }

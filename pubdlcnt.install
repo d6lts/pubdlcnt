@@ -22,6 +22,9 @@ function pubdlcnt_install() {
 
   // Set valid extentions to database
   variable_set('pubdlcnt_valid_extensions', $valid_extensions);
+
+  // Change module's weight 
+  db_query("UPDATE {system} SET weight = 100 WHERE name = 'pubdlcnt'");
 }
 
 /**
@@ -70,4 +73,12 @@ function pubdlcnt_uninstall() {
   drupal_uninstall_schema('pubdlcnt');
   db_query("DELETE FROM {variable} WHERE name LIKE 'pubdlcnt%'");
   cache_clear_all('variables', 'cache');
+}
+
+/**
+ * Module update functions
+ */
+function pubdlcnt_update_6101() {
+  // Change module's weight 
+  db_query("UPDATE {system} SET weight = 100 WHERE name = 'pubdlcnt'");
 }
