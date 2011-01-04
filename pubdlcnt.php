@@ -47,17 +47,18 @@ else {
   print "Error: Public Download Count module failed to work. The file pubdlcnt.php requires manual editing.\n";
   chdir('/absolute-path-to-drupal-root/'); // <---- edit this line!
 
-  if (!file_exits('./includes/bootstrap.inc')) {
+  if (!file_exists('./includes/bootstrap.inc')) {
     // We can not locate the bootstrap.inc file, let's give up using the
     // script and just fetch the file
     header('Location: ' . $_GET['file']);
     exit;
   }
 }
-include_once './includes/bootstrap.inc';
+define('DRUPAL_ROOT', realpath(getcwd()));
+include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
 // following two lines are needed for check_url() and valid_url() call
-include_once './includes/common.inc';
-include_once './modules/filter/filter.module';
+include_once DRUPAL_ROOT . '/includes/common.inc';
+include_once DRUPAL_ROOT . '/modules/filter/filter.module';
 // start Drupal bootstrap for accessing database
 drupal_bootstrap(DRUPAL_BOOTSTRAP_DATABASE);
 chdir($current_dir);
@@ -81,7 +82,7 @@ if (is_valid_file_url($url)) {
    * Step-4: update counter data (only if the URL is valid and file exists)
    */
   $filename = basename($url);
-  pubdlcnt_update_counter($filename, $nid);
+  pubdlcnt_update_counter($url, $filename, $nid);
 }
 
 /**
@@ -121,8 +122,8 @@ function is_valid_file_url($url) {
 
   // get valid extensions settings from Drupal
   $result = db_query("SELECT value FROM {variable} 
-						WHERE name = 'pubdlcnt_valid_extensions'");
-  $valid_extensions = unserialize(db_result($result));
+                      WHERE name = :name", array(':name' => 'pubdlcnt_valid_extensions'))->fetchField();
+  $valid_extensions = unserialize($result);
   if (!empty($valid_extensions)) {
     // check if the extension is a valid extension or not (case insensitive)
     $s_valid_extensions = strtolower($valid_extensions);
@@ -168,39 +169,141 @@ function url_exists($url) {
     // 
     // So we return true only when status 200 or 302
     if (preg_match('#^HTTP/.*\s+[200|302]+\s#i', $head)) {
-      return $pos !== false;
+      return true;
     }
   }
   return false;
 }
 
 /**
+ * Function to check duplicate download from the same IP address within a day
+ * @return   0 - OK,  1 - duplicate (skip counting)
+ */
+function pubdlcnt_check_duplicate($url, $name, $nid) {
+  // get the settings
+  $result = db_query("SELECT value FROM {variable} 
+						WHERE name = :name", array(':name' => 'pubdlcnt_skip_duplicate'))->fetchField();
+  $skip_duplicate = unserialize($result);
+  if(!$skip_duplicate) return 0; // OK
+
+  // OK, we should check the duplicate download
+  $ip = $_SERVER['REMOTE_ADDR'];
+  if (!preg_match("/^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/", $ip)) {
+    return 1; // NG (Invalid IPv4 IP-addresss)
+  }
+  $today = mktime(0, 0, 0, date("m"), date("d"), date("Y")); // Unix timestamp
+
+  // obtain fid 
+  $fid = db_query("SELECT fid FROM {pubdlcnt} WHERE name=:name", array(':name' => $name))->fetchField();
+  if ($fid) {
+    $result = db_query("SELECT * FROM {pubdlcnt_ip} WHERE fid=:fid AND ip=:ip AND utime=:utime", array(':fid' => $fid, ':ip' => $ip, ':utime' => $today));
+    if ($result->rowCount()) {
+      return 1; // found duplicate!
+    }
+    else {
+      // add IP address to the database
+      db_insert('pubdlcnt_ip')
+        ->fields(array(
+          'fid' => $fid,
+          'ip' => $ip,
+          'utime' => $today))
+        ->execute();
+    }
+  }
+  else {
+    // no file record -> create file record first
+    $fid = db_insert('pubdlcnt')
+      ->fields(array(
+        'nid' => $nid,
+        'name' => $name,
+        'url' => $url,
+        'count' => 1,
+        'utime' => $today))
+      ->execute();
+    // next, add IP address to the database
+    db_insert('pubdlcnt_ip')
+      ->fields(array(
+        'fid' => $fid,
+        'ip' => $ip,
+        'utime' => $today))
+      ->execute();
+  }
+  return 0;
+}
+
+/**
  * Function to update the data base with new counter value
  */
-function pubdlcnt_update_counter($name, $nid) {
+function pubdlcnt_update_counter($url, $name, $nid) {
   $count = 1;
-  $name = db_escape_string($name);	// security purpose
+  $name = addslashes($name);	// security purpose
 
   if (empty($nid)) { // node nid is invalid
     return;
   }
+
+  // check the duplicate download from the same IP and skip updating counter
+  if (pubdlcnt_check_duplicate($url, $name, $nid)) {
+    return;
+  }
+
   // today(00:00:00AM) in Unix time
   $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
-  // convert to datettime format
-  $mysqldate = date("Y-m-d H:i:s", $today);
 
-  $result = db_query("SELECT * FROM {pubdlcnt} WHERE name='%s' AND date='%s'", 
-                      $name, $mysqldate);
-  if ($rec = db_fetch_object($result)) {
-    $count = $rec->count + 1;
-    // update an existing record
-    db_query("UPDATE {pubdlcnt} SET count=%d WHERE name='%s' AND date='%s'", 
-			$count, $name, $mysqldate);
+  // obtain fid 
+  $result = db_query("SELECT fid, count FROM {pubdlcnt} WHERE name=:name", array(':name' => $name));
+  if (!$result->rowCount()) {
+    // no file record -> create file record first
+    $fid = db_insert('pubdlcnt')
+      ->fields(array(
+        'nid'   => $nid,
+        'name'  => $name,
+        'url'   => $url,
+        'count' => 1,
+        'utime' => $today))
+      ->execute();
   }
   else {
-    // insert a new record
-    db_query("INSERT INTO {pubdlcnt} (name, nid, date, count) VALUES ('%s', %d, '%s', %d)", 
-			$name, $nid, $mysqldate, $count);
+    $rec = $result->fetchObject();
+    $fid = $rec->fid;
+    // update total counter
+    $total_count = $rec->count + 1;
+    db_update('pubdlcnt')
+      ->fields(array(
+        'nid'   => $nid,
+        'url'   => $url,
+        'count' => $total_count,
+        'utime' => $today))
+      ->condition('fid', $rec->fid)
+      ->execute();
+  }
+
+  // get the settings
+  $result = db_query("SELECT value FROM {variable} WHERE name=:name", 
+                      array(':name' => 'pubdlcnt_save_history'))->fetchField();
+  $save_history = unserialize($result);
+
+  if ($save_history) {
+    $count = db_query("SELECT count FROM {pubdlcnt_history} WHERE fid=:fid AND utime=:utime", 
+                     array(':fid' => $fid, ':utime' => $today))->fetchField();
+    if ($count) {
+      $count++;
+      // update an existing record
+      db_update('pubdlcnt_history')
+        ->fields(array('count' => $count))
+        ->condition('fid', $fid)
+        ->condition('utime', $today)
+        ->execute();
+    }
+    else {
+      // insert a new record
+      db_insert('pubdlcnt_history')
+        ->fields(array(
+          'fid' => $fid,
+          'utime' => $today,
+          'count' => 1))
+        ->execute();
+    }
   }
 }
 ?>

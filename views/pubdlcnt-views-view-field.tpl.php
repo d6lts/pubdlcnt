@@ -12,6 +12,8 @@
  */
 
 // apply pubdlcnt filter to convert any file download URL 
-$output = _filter_pubdlcnt($output, $row->nid);
+if(isset($row->nid)) {
+  $output = _filter_pubdlcnt($output, $row->nid);
+}
 print $output;
 ?>
