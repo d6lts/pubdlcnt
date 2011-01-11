@@ -1097,6 +1097,7 @@ function pubdlcnt_block_save($delta = '', $edit = array()) {
  * Implements hook_block_view().
  */
 function pubdlcnt_block_view($delta = '') {
+  $items = array();
   $count  = variable_get('pubdlcnt_block_count_'  . $delta, 10);
   $link   = variable_get('pubdlcnt_block_link_'   . $delta, 1);
   $period = variable_get('pubdlcnt_block_period_' . $delta, 0);
