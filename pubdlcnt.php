@@ -217,7 +217,7 @@ function pubdlcnt_check_duplicate($url, $name, $nid) {
         'nid' => $nid,
         'name' => $name,
         'url' => $url,
-        'count' => 1,
+        'count' => 0,
         'utime' => $today))
       ->execute();
     // next, add IP address to the database
