@@ -1,4 +1,10 @@
 <?php
+/*
+ * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
+ * Distributed under the GNU General Public License, version 2.0
+ *   https://opensource.org/licenses/GPL-2.0
+ */
+
 /**
  * customizing counter display of public download count module
  *
