@@ -477,11 +477,17 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
       // obtain node title in the current language if there's transated node
       $nid = _pubdlcnt_get_translated_node_id($rec->nid);
       $node = node_load($nid);
-      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $node->title . '</a>', 
+
+      // escape content to protect against XSS
+      $safe_title = htmlspecialchars($node->title);
+      $safe_name = htmlspecialchars($rec->name);
+      $safe_user = htmlspecialchars($rec->username);
+
+      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $safe_title . '</a>',
                                'align' => 'left', 'style' => 'padding-right: 20px');
-      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $rec->name, 
+      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $safe_name,
                                'align' => 'left', 'style' => 'padding-right: 20px');
-      $row[] = array('data' => '<a href="' . base_path() . 'user/' . $rec->uid . '">' . $rec->username . '</a>', 'align' => 'left'); 
+      $row[] = array('data' => '<a href="' . base_path() . 'user/' . $rec->uid . '">' . $safe_user . '</a>', 'align' => 'left');
       $row[] = array('data' => $dateonly,   'align' => 'left', 'style' => 'padding-right: 20px');
       if ($save_history) {
         $row[] = array('data' => '<a href="' 
