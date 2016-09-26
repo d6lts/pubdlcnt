@@ -4,8 +4,7 @@
  *
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
  * Copyright 2016 Corey Halpin <chalpin@scout.wisc.edu>, Internet Scout Research Group
- * Distributed under the GNU General Public License, version 2.0
- *   https://opensource.org/licenses/GPL-2.0
+ * See LICENSE.txt for licensing terms.
  */
 
 define("MODE_TOTAL",   0);
@@ -39,7 +38,7 @@ function pubdlcnt_filter($text, $nid) {
 function _filter_pubdlcnt($text, $nid) {
   // return if $nid is not specified
   if (!$nid) return $text;
- 
+
   // 1. cross-platform line breaks to UNIX line breaks
   $text = str_replace(array("\r\n", "\r"), "\n", $text);
 
@@ -97,9 +96,9 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
 
   // remove backslash before the double-quote
   $all   = str_replace('\"','"',$all);
-  $str1  = str_replace('\"','"',$str1); 
-  $str2  = str_replace('\"','"',$str2); 
-  $str3  = str_replace('\"','"',$str3); 
+  $str1  = str_replace('\"','"',$str1);
+  $str2  = str_replace('\"','"',$str2);
+  $str3  = str_replace('\"','"',$str3);
 
   // if (preg_match('/\s*?rel=["\']lightbox.*["\']/i', $str1)) {
   if (preg_match('/\s*?rel=["\'](lightbox|thickbox|shadowbox).*["\']/i', $str1)) {
@@ -156,18 +155,18 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
   if (!in_array($s_ext, $s_valid_ext_array)) {
     return $all;
   }
-  
+
   // show total download count in nodes
   if (user_access('view total download count in nodes')) {
     if (user_access('administer public download count')) {
       // total count with link to statistics page
       $cnt = pubdlcnt_get_total_counter($filename);
       if ($save_history) {
-        $path = base_path() . _pubdlcnt_language_prefix() 
+        $path = base_path() . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter/' . $filename;
       }
       else {
-        $path = base_path() . _pubdlcnt_language_prefix() 
+        $path = base_path() . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter';
       }
       $str3 .= theme('pubdlcnt_counter', array('type' => 'node', 'value' => $cnt, 'path' => $path));
@@ -183,7 +182,7 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
 
   $out = $matches[1] . $matches[2] . $matches[3] . $str2 . $str3;
 
-  return $out;  
+  return $out;
 }
 
 /**
@@ -205,14 +204,14 @@ function pubdlcnt_get_fid($name) {
 }
 
 /**
- * Generate horizontal bar 
+ * Generate horizontal bar
  */
 function _pubdlcnt_count_bar($count, $max) {
-  $width = (int)((100 / $max) * $count); 
+  $width = (int)((100 / $max) * $count);
   if ($count && $width == 0) $width = 1;
 
   $output  = '<div style="width:100px; background-color:#eee;">';
-  $output .= '<div style="width:' . $width 
+  $output .= '<div style="width:' . $width
               . 'px; background-color:#88aaff; font-size:9px">';
   $output .= '&nbsp;';
   $output .= '</div></div>';
@@ -362,8 +361,8 @@ function pubdlcnt_config_form_validate($form, &$form_state) {
 
  *  admin/reports/pubdlcnt/counter/(file)/confirm     a file counter reset confirm
  *  admin/reports/pubdlcnt/counter/(file)/reset       a file counter reset execute
- * 
- * Parameters: 
+ *
+ * Parameters:
  *  p1 = file name or 'all' (or NULL)
  *  p2 = year or 'confirm' or 'reset' (or NULL)
  *  p3 = month (or NULL)
@@ -470,7 +469,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
 
     $rows = array();
     foreach ($result as $rec) {
-      $dateonly = date('Y-m-d (D)', $rec->last); 
+      $dateonly = date('Y-m-d (D)', $rec->last);
       $row = array();
       $row[] = array('data' => $rec->total, 'align' => 'right');
       $row[] = array('data' => _pubdlcnt_count_bar($rec->total, $max), 'align' => 'left');
@@ -490,14 +489,14 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
       $row[] = array('data' => '<a href="' . base_path() . 'user/' . $rec->uid . '">' . $safe_user . '</a>', 'align' => 'left');
       $row[] = array('data' => $dateonly,   'align' => 'left', 'style' => 'padding-right: 20px');
       if ($save_history) {
-        $row[] = array('data' => '<a href="' 
+        $row[] = array('data' => '<a href="'
             . base_path()
             . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter/'
             . $rec->name
             . '">'
             . t('Detail')
-            . '</a>' 
+            . '</a>'
             . '&nbsp;&nbsp;|&nbsp;&nbsp;'
             . '<a href="'
             . base_path()
@@ -507,11 +506,11 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
             . '/confirm' // MODE_CONFIRM
             . '">'
             . t('Reset')
-            . '</a>', 
+            . '</a>',
             'align' => 'left', 'style' => 'padding: 2px 10px');
       }
       else {
-        $row[] = array('data' => '<a href="' 
+        $row[] = array('data' => '<a href="'
             . '<a href="'
             . base_path()
             . _pubdlcnt_language_prefix()
@@ -520,7 +519,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
             . '/confirm' // MODE_CONFIRM
             . '">'
             . t('Reset')
-            . '</a>', 
+            . '</a>',
             'align' => 'left', 'style' => 'padding: 2px 10px');
       }
       $rows[] = $row;
@@ -545,7 +544,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
   /**
    *---------------------------------------------------------------
    * Mode: Confirm (confirm to reset the counter)
-   *       $name - file name 
+   *       $name - file name
    *---------------------------------------------------------------
    */
   else if ($mode == MODE_CONFIRM) {
@@ -557,8 +556,8 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
     $output = t('Are you sure you want to reset the counter of the file %name?',
       array('%name' => $name));
     $output .= '<br />' . t('This action cannot be undone!') . '<br /><br />';
-    $form_state['reset_target'] = $name;  
-    return confirm_form($form, 
+    $form_state['reset_target'] = $name;
+    return confirm_form($form,
       NULL, // title
       'admin/reports/pubdlcnt/counter',
       $output,
@@ -568,7 +567,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
   /**
    *---------------------------------------------------------------
    * Mode: Reset (delete counter data for the specified file)
-   *       $name - file name 
+   *       $name - file name
    *---------------------------------------------------------------
    */
   else if ($mode == MODE_RESET) {
@@ -594,7 +593,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
   /**
    *------------------------------------------------------------------
    * Mode: Detail
-   *       $name - file name 
+   *       $name - file name
    *       $tgt_y - show daily stastic of a specific period (or empty)
    *       $tgt_m - show daily stastic of a specific period (or empty)
    *------------------------------------------------------------------
@@ -611,7 +610,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
 
     $result = db_query("SELECT * FROM {pubdlcnt_history} WHERE fid=:fid ORDER BY utime DESC", array(':fid' => $fid));
     foreach ($result as $rec) {
-      // accumulate counter for yearly and monthly 
+      // accumulate counter for yearly and monthly
       $y = date('Y', $rec->utime);
       $m = date('n', $rec->utime);
       $d = date('j', $rec->utime);
@@ -640,8 +639,8 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
     $total = pubdlcnt_get_total_counter($name);
     $form['name'] = array(
       '#type' => 'item',
-      '#markup' => '<p align="left"><b>' . $name 
-            . '</b> (' . t('Total downloads: ') 
+      '#markup' => '<p align="left"><b>' . $name
+            . '</b> (' . t('Total downloads: ')
             . '<b>' . $total . '</b>)</p>',
     );
     //
@@ -709,7 +708,7 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
         $row[] = array('data' => $m,     'align' => 'left');
         $row[] = array('data' => $count, 'align' => 'right');
         $row[] = array('data' => _pubdlcnt_count_bar($count, $max), 'align' => 'left');
-        $row[] = array('data' => '<a href="' 
+        $row[] = array('data' => '<a href="'
             . base_path()
             . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/counter/'
@@ -814,7 +813,7 @@ function pubdlcnt_export_form() {
   );
   $form['export_note'] = array(
     '#type' => 'item',
-    '#markup' => t('The exported file has the following four columns.') 
+    '#markup' => t('The exported file has the following four columns.')
       . '<ul>'
       . '<li>' . t('Node title')
       . '<li>' . t('File name')
@@ -844,7 +843,7 @@ function pubdlcnt_export_form_submit($form, &$form_state) {
     // save the export mode
     variable_set('pubdlcnt_export_mode', $export_mode);
 
-    $file_path = file_directory_temp() . '/public_download_count_' 
+    $file_path = file_directory_temp() . '/public_download_count_'
             . date('Y-m-d') . '.txt';
     export_counter_file($file_path, $export_mode);
     if (!file_exists($file_path)) {
@@ -896,7 +895,7 @@ function export_counter_file($file_path, $export_mode) {
     foreach ($result as $rec) {
       $dateonly = date('Y-m-d', $rec->utime);
       $dow      = date('D', $rec->utime);
-      $row = "\"" . $rec->title . "\"\t" . $rec->name . "\t" . $rec->url . "\t" . 
+      $row = "\"" . $rec->title . "\"\t" . $rec->name . "\t" . $rec->url . "\t" .
         $rec->username . "\t" . $dateonly . "\t" . $dow . "\t" . $rec->count . "\n";
       fwrite($fp, $row);
     }
@@ -906,7 +905,7 @@ function export_counter_file($file_path, $export_mode) {
     foreach ($result as $rec) {
       $dateonly = date('Y-m-d', $rec->utime);
       $dow      = date('D', $rec->utime);
-      $row = "\"" . $rec->title . "\"\t" . $rec->name . "\t" . $rec->url . "\t" . 
+      $row = "\"" . $rec->title . "\"\t" . $rec->name . "\t" . $rec->url . "\t" .
         $rec->username . "\t" . $dateonly . "\t" . $dow . "\t" . $rec->total . "\n";
       fwrite($fp, $row);
     }
@@ -1054,9 +1053,9 @@ function pubdlcnt_block_configure($delta = '') {
       '#title' => t('Item display'),
       '#default_value' => variable_get('pubdlcnt_block_link_' . $delta, 1),
       '#options' => array(
-        0 => t('File name - no link'), 
+        0 => t('File name - no link'),
         1 => t('File name - link to node'),
-        2 => t('Node title - no link'), 
+        2 => t('Node title - no link'),
         3 => t('Node title - link to node'),
         4 => t('User(owner) name - no link'),
         5 => t('User(owner) name - link to user profile'),
@@ -1068,7 +1067,7 @@ function pubdlcnt_block_configure($delta = '') {
       '#title' => t('Counting period'),
     '#default_value' => variable_get('pubdlcnt_block_period_' . $delta, 0),
     '#options' => array(
-      0 => t('All time'), 
+      0 => t('All time'),
       1 => t('Last year'),
       2 => t('This year'),
       3 => t('Last month'),
@@ -1125,7 +1124,7 @@ function pubdlcnt_block_view($delta = '') {
   $till_utime = strtotime($till);
 
   $period_title = array(
-    t(''), 
+    t(''),
     t('Last year'),
     t('This year'),
     t('Last month'),
@@ -1151,7 +1150,7 @@ function pubdlcnt_block_view($delta = '') {
     // obtain node title in the current language if there's transated node
     $node = node_load($nid);
 
-    if (isset($node->uri['path'])) { // if path alias exists 
+    if (isset($node->uri['path'])) { // if path alias exists
       $path = base_path() . _pubdlcnt_language_prefix() . $node->uri['path'];
     }
     else { // otherwise
@@ -1182,17 +1181,17 @@ function pubdlcnt_block_view($delta = '') {
       }
       if (user_access('view total download count in block')) {
         if ($link == 4 || $link == 5) {
-          $path = base_path() . _pubdlcnt_language_prefix() 
+          $path = base_path() . _pubdlcnt_language_prefix()
                . 'user/' . $rec->uid . '/pubdlcnt';
         }
         else {
           $save_history = variable_get('pubdlcnt_save_history', 1);
           if($save_history) {
-            $path = base_path() . _pubdlcnt_language_prefix() 
+            $path = base_path() . _pubdlcnt_language_prefix()
                . 'admin/reports/pubdlcnt/counter/' . $rec->name;
           }
           else {
-            $path = base_path() . _pubdlcnt_language_prefix() 
+            $path = base_path() . _pubdlcnt_language_prefix()
                . 'admin/reports/pubdlcnt/counter';
           }
         }
@@ -1289,7 +1288,7 @@ function _pubdlcnt_generate_top_user_query($count = 10, $period = 0, $cfrom = ''
       }
       break;
     case 0: // All time
-    default: 
+    default:
       break;
   }
   $query .= " GROUP BY n.uid ORDER BY total DESC";
@@ -1360,7 +1359,7 @@ function _pubdlcnt_generate_top_download_query($count = 10, $period = 0, $cfrom 
       }
       break;
     case 0: // All time
-    default: 
+    default:
       break;
   }
   $query .= " GROUP BY p.name ORDER BY total DESC";
@@ -1382,7 +1381,7 @@ function theme_pubdlcnt_counter($variables) {
   $type = $variables['type'];
   $value = $variables['value'];
   $path = $variables['path'];
-  
+
   if ($path) {
     $output = ' <a href="' . $path . '">(' . $value . ')</a>';
   }
@@ -1406,7 +1405,7 @@ function _pubdlcnt_language_prefix() {
 }
 
 /**
- * Get node id of the current language (if any) 
+ * Get node id of the current language (if any)
  */
 function _pubdlcnt_get_translated_node_id($nid) {
   global $language;
@@ -1416,7 +1415,7 @@ function _pubdlcnt_get_translated_node_id($nid) {
   if ($result->rowCount() > 1) {
     // found multiple nodes
     //   which means that the $nid was the node id of the primary language node
-    //   so the $result has nodes of all languages 
+    //   so the $result has nodes of all languages
   }
   else {
     // found only one page
@@ -1499,7 +1498,7 @@ function pubdlcnt_user_page_access($account, $user = FALSE) {
  * Contents of user account page
  */
 function pubdlcnt_user_page($user) {
-  
+
   $save_history = variable_get('pubdlcnt_save_history', 1);
 
   // sortable table: default sort by count (DESC)
@@ -1546,27 +1545,27 @@ function pubdlcnt_user_page($user) {
 
   $rows = array();
   foreach ($result as $rec) {
-    $dateonly = date('Y-m-d (D)', $rec->last); 
+    $dateonly = date('Y-m-d (D)', $rec->last);
     $row = array();
     $row[] = array('data' => $rec->total, 'align' => 'right');
     $row[] = array('data' => _pubdlcnt_count_bar($rec->total, $max), 'align' => 'left');
     // obtain node title in the current language if there's transated node
     $nid = _pubdlcnt_get_translated_node_id($rec->nid);
     $node = node_load($nid);
-    $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $node->title . '</a>', 
+    $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $node->title . '</a>',
                                'align' => 'left', 'style' => 'padding-right: 20px');
-    $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $rec->name . '</a>', 
+    $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $rec->name . '</a>',
                                'align' => 'left', 'style' => 'padding-right: 20px');
     $row[] = array('data' => $dateonly,   'align' => 'left', 'style' => 'padding-right: 20px');
-    if ($admin && $save_history) { 
-      $row[] = array('data' => '<a href="' 
+    if ($admin && $save_history) {
+      $row[] = array('data' => '<a href="'
             . base_path()
             . _pubdlcnt_language_prefix()
             . 'admin/reports/pubdlcnt/'
             . $rec->name
             . '">'
             . t('Detail')
-            . '</a>', 
+            . '</a>',
             'align' => 'left', 'style' => 'padding: 2px 10px');
     }
     $rows[] = $row;
@@ -1584,5 +1583,5 @@ function pubdlcnt_user_page($user) {
   else {
     $output = t('No download count records are found.');
   }
-  return $output; 
+  return $output;
 }

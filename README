@@ -4,8 +4,7 @@ Public Download Count (pubdlcnt) 2.x
 
 (C) Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
 
-Distributed under the GNU General Public License, version 2.0
-  https://opensource.org/licenses/GPL-2.0
+See LICENSE.txt for licensing terms.
 
 
 Introduction
@@ -31,7 +30,7 @@ This module works with anchor tags that satisfies the following criterias.
 
  3. The anchor tag must not have 'rel=lightbox...' attribute which means that it is the anchor to an image to be handled by the lightbox module to avoid the conflict problem with the lightbox module. (thickbox and shadowbox too)
 
- 4. The anchor tag must have a file name with a valid file name extension. Valid file name extesions can be customized at the module's configuration page. 
+ 4. The anchor tag must have a file name with a valid file name extension. Valid file name extesions can be customized at the module's configuration page.
 
  5. The anchor tag must not have a file path to the private file system (which includes /system/files in its path).
 
@@ -40,8 +39,8 @@ This module works with anchor tags that satisfies the following criterias.
 
 How it works
 ============
-This module keep track of file downloading operation and records the download count for each file (by file name) on daily basis. 
-You can either enable/disable the 'save history record' option at the module's configuration page. If this option is enabled, you can see the stastics of download count for each file by daily, monthly or even yearly later.  If this option is disabled, it only keeps track of the accumulated download counter and the last download date. 
+This module keep track of file downloading operation and records the download count for each file (by file name) on daily basis.
+You can either enable/disable the 'save history record' option at the module's configuration page. If this option is enabled, you can see the stastics of download count for each file by daily, monthly or even yearly later.  If this option is disabled, it only keeps track of the accumulated download counter and the last download date.
 
 When you install and enable this module, this module adds two pages, one under site configuration and the other one under report section of administer site.
 

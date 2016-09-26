@@ -6,11 +6,10 @@
  * Provides views data for pubdlcnt.module
  *
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
- * Distributed under the GNU General Public License, version 2.0
- *   https://opensource.org/licenses/GPL-2.0
+ * See LICENSE.txt for licensing terms.
  */
 
-/** 
+/**
  * Implements hook_views_data().
  */
 function pubdlcnt_views_data() {
@@ -22,7 +21,7 @@ function pubdlcnt_views_data() {
     'help' => t("Download history of files handled by public download count module."),
   );
 
-  // joins 
+  // joins
   $data['pubdlcnt']['table']['join'] = array(
     'node' => array(
       'left_field' => 'nid',
@@ -117,4 +116,3 @@ function pubdlcnt_views_data() {
 
   return $data;
 }
-

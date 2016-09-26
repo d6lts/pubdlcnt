@@ -1,5 +1,5 @@
 <?php
-// $Id: 
+// $Id:
 
 /**
  * @file
@@ -7,8 +7,7 @@
  * module install/uninstall script
  *
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
- * Distributed under the GNU General Public License, version 2.0
- *   https://opensource.org/licenses/GPL-2.0
+ * See LICENSE.txt for licensing terms.
  */
 
 /**
@@ -21,7 +20,7 @@ function pubdlcnt_install() {
   // Set valid extentions to database
   variable_set('pubdlcnt_valid_extensions', $valid_extensions);
 
-  // Change module's weight 
+  // Change module's weight
   db_query("UPDATE {system} SET weight = 100 WHERE name = 'pubdlcnt'");
 }
 
@@ -145,4 +144,3 @@ function pubdlcnt_uninstall() {
   db_query("DELETE FROM {variable} WHERE name LIKE 'pubdlcnt%'");
   cache_clear_all('variables', 'cache');
 }
-

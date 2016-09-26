@@ -1,8 +1,7 @@
 <?php
 /*
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
- * Distributed under the GNU General Public License, version 2.0
- *   https://opensource.org/licenses/GPL-2.0
+ * See LICENSE.txt for licensing terms.
  */
 
 /**
@@ -13,13 +12,13 @@
  *        $variables['path']  - path to the statistics page (if permission allows)
  */
 function phptemplate_pubdlcnt_counter($variables) {
-  
+
   $type = $variables['type'];
   $value = $variables['value'];
   $path = $variables['path'];
 
   /**
-   * This theme function customze the counter display 
+   * This theme function customze the counter display
    *
    * node     filename (X downloads)
    *
