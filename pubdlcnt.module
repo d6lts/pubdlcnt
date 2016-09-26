@@ -46,7 +46,7 @@ function _filter_pubdlcnt($text, $nid) {
   $new_text = preg_replace_callback(
     '/(<a .*?>)(.*?)(<\/a>)/is',
     function($matches) use ($nid) {
-      _pubdlcnt_replace_anchor_url(
+      return _pubdlcnt_replace_anchor_url(
         $matches[0],
         $matches[1],
         $matches[2],
@@ -108,7 +108,7 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
     // $str1 = preg_replace('/\s*?rel=["\'](lightbox|thickbox|shadowbox).*["\']/i', '', $str1);
   }
 
-  preg_match('/(<a.*?href=["\'])(.*?)(["\'].*?>)/ise', $str1, $matches);
+  preg_match('/(<a .*?href=["\'])(.*?)(["\'].*?>)/ise', $str1, $matches);
   // Example: <a href=\"http://www.pixture.com/files/sample.zip\" title=\"Sample\">
   // $matches[0]: entire str1
   // $matches[1]: first part of anchor: <a href=\"
