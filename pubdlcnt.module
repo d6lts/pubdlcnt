@@ -476,50 +476,25 @@ function pubdlcnt_counter_form($form, &$form_state, $p1=NULL, $p2=NULL, $p3=NULL
       // obtain node title in the current language if there's transated node
       $nid = _pubdlcnt_get_translated_node_id($rec->nid);
       $node = node_load($nid);
-
-      // escape content to protect against XSS
-      $safe_title = htmlspecialchars($node->title);
-      $safe_name = htmlspecialchars($rec->name);
-      $safe_user = htmlspecialchars($rec->username);
-
-      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $safe_title . '</a>',
-                               'align' => 'left', 'style' => 'padding-right: 20px');
-      $row[] = array('data' => '<a href="' . base_path() . _pubdlcnt_language_prefix() . 'node/' . $nid . '">' . $safe_name,
-                               'align' => 'left', 'style' => 'padding-right: 20px');
-      $row[] = array('data' => '<a href="' . base_path() . 'user/' . $rec->uid . '">' . $safe_user . '</a>', 'align' => 'left');
+      $row[] = array('data' => l($node->title, "node/".$nid),
+                     'align' => 'left', 'style' => 'padding-right: 20px');
+      $row[] = array('data' => l($rec->name, "node/".$nid),
+                     'align' => 'left', 'style' => 'padding-right: 20px');
+      $row[] = array('data' => l($rec->username, "user/".$rec->uid),
+                     'align' => 'left');
       $row[] = array('data' => $dateonly,   'align' => 'left', 'style' => 'padding-right: 20px');
       if ($save_history) {
-        $row[] = array('data' => '<a href="'
-            . base_path()
-            . _pubdlcnt_language_prefix()
-            . 'admin/reports/pubdlcnt/counter/'
-            . $rec->name
-            . '">'
-            . t('Detail')
-            . '</a>'
-            . '&nbsp;&nbsp;|&nbsp;&nbsp;'
-            . '<a href="'
-            . base_path()
-            . _pubdlcnt_language_prefix()
-            . 'admin/reports/pubdlcnt/counter/'
-            . $rec->name
-            . '/confirm' // MODE_CONFIRM
-            . '">'
-            . t('Reset')
-            . '</a>',
-            'align' => 'left', 'style' => 'padding: 2px 10px');
+        $row[] = array('data' => t(
+          '<a href="@detail">Detail</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="@reset">Reset</a>',
+          array(
+            '@detail' => url('admin/reports/pubdlcnt/counter/'.$rec->name),
+            '@reset' => url('admin/reports/pubdlcnt/counter/'.$rec->name.'/confirm'))),
+          'align' => 'left', 'style' => 'padding: 2px 10px');
       }
       else {
-        $row[] = array('data' => '<a href="'
-            . '<a href="'
-            . base_path()
-            . _pubdlcnt_language_prefix()
-            . 'admin/reports/pubdlcnt/counter/'
-            . $rec->name
-            . '/confirm' // MODE_CONFIRM
-            . '">'
-            . t('Reset')
-            . '</a>',
+        $row[] = array('data' => t('<a href="@reset">Reset</a>',
+            array(
+              '@reset' => url('admin/reports/pubdlcnt/counter/'.$rec->name.'/confirm'))),
             'align' => 'left', 'style' => 'padding: 2px 10px');
       }
       $rows[] = $row;
