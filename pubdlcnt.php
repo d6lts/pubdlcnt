@@ -1,6 +1,4 @@
 <?php
-// $Id: 
-
 /**
  * @file
  *
@@ -15,9 +13,10 @@
  *
  * NOTE: we can not use variable_get() function from this external PHP program
  *	     since variable_get() depends on Drupal's internal global variable.
- *       So we need to directly access {variable} table of the Drupal databse 
+ *       So we need to directly access {variable} table of the Drupal databse
  *       to obtain some module settings.
  *
+ * Copyright 2016 Corey Halpin <chalpin@scout.wisc.edu>
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
  * Distributed under the GNU General Public License, version 2.0
  *   https://opensource.org/licenses/GPL-2.0
@@ -70,7 +69,7 @@ chdir($current_dir);
 $url = check_url($_GET['file']);
 $nid = check_url($_GET['nid']);
 
-if (!eregi("^(f|ht)tps?:\/\/.*", $url)) { // check if this is absolute URL 
+if (!preg_match("%^(f|ht)tps?://.*%i", $url)) { // check if this is absolute URL
   // if the URL is relative, then convert it to absolute
   $url = "http://" . $_SERVER['SERVER_NAME'] . $url;
 }
@@ -122,7 +121,7 @@ function is_valid_file_url($url) {
   $ext = $extension[$num - 1];
 
   // get valid extensions settings from Drupal
-  $result = db_query("SELECT value FROM {variable} 
+  $result = db_query("SELECT value FROM {variable}
                       WHERE name = :name", array(':name' => 'pubdlcnt_valid_extensions'))->fetchField();
   $valid_extensions = unserialize($result);
   if (!empty($valid_extensions)) {
@@ -134,7 +133,7 @@ function is_valid_file_url($url) {
       return false;
     }
   }
-  
+
   if (!url_exists($url)) {
     return false;
   }
@@ -155,7 +154,7 @@ function url_exists($url) {
     if (!$fid) return false;
     $page = isset($a_url['path']) ? $a_url['path'] : '';
     $page .= isset($a_url['query']) ? '?' . $a_url['query'] : '';
-    fputs($fid, 'HEAD ' . $page . ' HTTP/1.0' . "\r\n" . 'HOST: ' 
+    fputs($fid, 'HEAD ' . $page . ' HTTP/1.0' . "\r\n" . 'HOST: '
         . $a_url['host'] . "\r\n\r\n");
     $head = fread($fid, 4096);
     $head = substr($head, 0, strpos($head, 'Connection: close'));
@@ -167,7 +166,7 @@ function url_exists($url) {
     // URL does not exits         'HTTP/1.1 404 Not Found'
     // Can not access URL         'HTTP/1.1 403 Forbidden'
     // Can not access server      'HTTP/1.1 500 Internal Server Error
-    // 
+    //
     // So we return true only when status 200 or 302
     if (preg_match('#^HTTP/.*\s+[200|302]+\s#i', $head)) {
       return true;
@@ -182,7 +181,7 @@ function url_exists($url) {
  */
 function pubdlcnt_check_duplicate($url, $name, $nid) {
   // get the settings
-  $result = db_query("SELECT value FROM {variable} 
+  $result = db_query("SELECT value FROM {variable}
 						WHERE name = :name", array(':name' => 'pubdlcnt_skip_duplicate'))->fetchField();
   $skip_duplicate = unserialize($result);
   if(!$skip_duplicate) return 0; // OK
@@ -194,7 +193,7 @@ function pubdlcnt_check_duplicate($url, $name, $nid) {
   }
   $today = mktime(0, 0, 0, date("m"), date("d"), date("Y")); // Unix timestamp
 
-  // obtain fid 
+  // obtain fid
   $fid = db_query("SELECT fid FROM {pubdlcnt} WHERE name=:name", array(':name' => $name))->fetchField();
   if ($fid) {
     $result = db_query("SELECT * FROM {pubdlcnt_ip} WHERE fid=:fid AND ip=:ip AND utime=:utime", array(':fid' => $fid, ':ip' => $ip, ':utime' => $today));
@@ -251,7 +250,7 @@ function pubdlcnt_update_counter($url, $name, $nid) {
   // today(00:00:00AM) in Unix time
   $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
 
-  // obtain fid 
+  // obtain fid
   $result = db_query("SELECT fid, count FROM {pubdlcnt} WHERE name=:name", array(':name' => $name));
   if (!$result->rowCount()) {
     // no file record -> create file record first
@@ -280,12 +279,12 @@ function pubdlcnt_update_counter($url, $name, $nid) {
   }
 
   // get the settings
-  $result = db_query("SELECT value FROM {variable} WHERE name=:name", 
+  $result = db_query("SELECT value FROM {variable} WHERE name=:name",
                       array(':name' => 'pubdlcnt_save_history'))->fetchField();
   $save_history = unserialize($result);
 
   if ($save_history) {
-    $count = db_query("SELECT count FROM {pubdlcnt_history} WHERE fid=:fid AND utime=:utime", 
+    $count = db_query("SELECT count FROM {pubdlcnt_history} WHERE fid=:fid AND utime=:utime",
                      array(':fid' => $fid, ':utime' => $today))->fetchField();
     if ($count) {
       $count++;
