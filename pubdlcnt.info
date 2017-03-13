@@ -1,4 +1,3 @@
-; $Id:
 name = Public Download Count
 description = "Provides file download counter for the Drupal's public file system."
 core = 7.x
@@ -7,4 +6,3 @@ configure = admin/config/pubdlcnt
 
 files[] = pubdlcnt.module
 files[] = pubdlcnt.install
-

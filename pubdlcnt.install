@@ -1,12 +1,12 @@
 <?php
-// $Id:
 
 /**
  * @file
- *
- * module install/uninstall script
+ * Module install/uninstall script for pubdlcnt.
  *
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
+ * Copyright 2017 Corey Halpin <chalpin@scout.wisc.edu>, Internet Scout
+ *   Research Group
  * See LICENSE.txt for licensing terms.
  */
 
@@ -14,13 +14,12 @@
  * Implements hook_install().
  */
 function pubdlcnt_install() {
-
   $valid_extensions = '7z bz bz2 gz gzip hqx iso lha lzh pkg pdf rpm sea sit tar tbz tgz zip';
 
-  // Set valid extentions to database
+  // Set valid extentions to database:
   variable_set('pubdlcnt_valid_extensions', $valid_extensions);
 
-  // Change module's weight
+  // Change module's weight:
   db_query("UPDATE {system} SET weight = 100 WHERE name = 'pubdlcnt'");
 }
 
@@ -32,41 +31,41 @@ function pubdlcnt_schema() {
     'fields' => array(
       'fid' => array(
         'description' => 'file ID (unique number)',
-        'type' => 'serial', // start from 1
+        'type' => 'serial',
         'unsigned' => TRUE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'nid' => array(
         'description' => 'node ID of which the file exists',
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'name' => array(
         'description' => 'file name',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'url' => array(
         'description' => 'URL of the file',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'utime' => array(
         'description' => 'dowload date in unix timestamp',
         'type' => 'int',
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'count' => array(
         'description' => 'total download count',
         'type' => 'int',
         'unsigned' => FALSE,
         'not null' => TRUE,
-        'default' => 0
+        'default' => 0,
       ),
     ),
     'primary key' => array('fid'),
@@ -75,27 +74,27 @@ function pubdlcnt_schema() {
     'fields' => array(
       'id' => array(
         'description' => 'record ID (unique number)',
-        'type' => 'serial', // start from 1
+        'type' => 'serial',
         'unsigned' => FALSE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'fid' => array(
         'description' => 'file ID',
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'utime' => array(
         'description' => 'dowload date in unix timestamp',
         'type' => 'int',
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'count' => array(
         'description' => 'total download count',
         'type' => 'int',
         'unsigned' => FALSE,
         'not null' => TRUE,
-        'default' => 0
+        'default' => 0,
       ),
     ),
     'primary key' => array('id'),
@@ -105,32 +104,32 @@ function pubdlcnt_schema() {
     'fields' => array(
       'id' => array(
         'description' => 'record ID (unique number)',
-        'type' => 'serial', // start from 1
+        'type' => 'serial',
         'unsigned' => FALSE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'fid' => array(
         'description' => 'file ID',
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'ip' => array(
         'description' => 'remote host IP address',
         'type' => 'varchar',
         'length' => 20,
         'not null' => FALSE,
-        'default' => ''
+        'default' => '',
       ),
       'utime' => array(
         'description' => 'download date in Unix timestamp',
         'type' => 'int',
         'unsigned' => FALSE,
         'not null' => TRUE,
-        'default' => 0
+        'default' => 0,
       ),
     ),
-	'primary key' => array('id'),
+    'primary key' => array('id'),
   );
 
   return $schema;

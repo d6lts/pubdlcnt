@@ -1,5 +1,3 @@
-// $Id: 
-
 /**
  * @file
  * Provides the administration JavaScript for the Public Download Count module.

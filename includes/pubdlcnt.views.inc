@@ -1,11 +1,12 @@
 <?php
-// $id:
 
 /**
  * @file
- * Provides views data for pubdlcnt.module
+ * Provides views data for pubdlcnt.module.
  *
  * Copyright 2009 Hideki Ito <hide@pixture.com> Pixture Inc.
+ * Copyright 2017 Corey Halpin <chalpin@scout.wisc.edu>, Internet Scout
+ *   Research Group
  * See LICENSE.txt for licensing terms.
  */
 
@@ -13,7 +14,7 @@
  * Implements hook_views_data().
  */
 function pubdlcnt_views_data() {
-  // base table info
+  // Base table info:
   $data['pubdlcnt']['table']['group'] = t('Public download count');
   $data['pubdlcnt']['table']['base'] = array(
     'field' => 'id',
@@ -21,7 +22,7 @@ function pubdlcnt_views_data() {
     'help' => t("Download history of files handled by public download count module."),
   );
 
-  // joins
+  // Joins:
   $data['pubdlcnt']['table']['join'] = array(
     'node' => array(
       'left_field' => 'nid',
@@ -29,7 +30,7 @@ function pubdlcnt_views_data() {
     ),
   );
 
-  // fields
+  // Fields:
   $data['pubdlcnt']['utime'] = array(
     'title' => t('Downloaded date'),
     'help' => t('The last date the file was downloaded.'),
@@ -102,7 +103,7 @@ function pubdlcnt_views_data() {
     ),
   );
 
-  // relationships
+  // Relationships:
   $data['pubdlcnt']['nid'] = array(
     'title' => t('Node'),
     'help' => t('Relate the download to the node to which the file is attached or included.'),
