@@ -16,11 +16,14 @@
 function pubdlcnt_install() {
   $valid_extensions = '7z bz bz2 gz gzip hqx iso lha lzh pkg pdf rpm sea sit tar tbz tgz zip';
 
-  // Set valid extentions to database:
+  // Set valid extensions to database:
   variable_set('pubdlcnt_valid_extensions', $valid_extensions);
 
   // Change module's weight:
-  db_query("UPDATE {system} SET weight = 100 WHERE name = 'pubdlcnt'");
+  db_update('system')
+    ->fields(array('weight' => 100))
+    ->condition('name', 'pubdlcnt')
+    ->execute();
 }
 
 /**
@@ -140,6 +143,9 @@ function pubdlcnt_schema() {
  */
 function pubdlcnt_uninstall() {
   // Remove tables.
-  db_query("DELETE FROM {variable} WHERE name LIKE 'pubdlcnt%'");
+  db_delete('variable')
+    ->condition('name', 'pubdlcnt%', 'LIKE')
+    ->execute();
+
   cache_clear_all('variables', 'cache');
 }

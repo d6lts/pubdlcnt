@@ -97,13 +97,11 @@ function pubdlcnt_is_valid_file_url(string $url) {
   // with space characters:
   $url = preg_replace('/\s/', '%20', $url);
   if (!valid_url($url, TRUE)) {
-      throw new Exception("Kicked by valid_url()");
     return FALSE;
   }
 
   // URL end with slach (/) and no file name:
   if (preg_match('/\/$/', $url)) {
-      throw new Exception("ENDS WITH SLASH");
     return FALSE;
   }
 
@@ -118,7 +116,6 @@ function pubdlcnt_is_valid_file_url(string $url) {
 
   // File name does not have extension:
   if (($num = count($extension)) <= 1) {
-      throw new Exception("HAS NO EXTENSION");
     return FALSE;
   }
   $ext = $extension[$num - 1];

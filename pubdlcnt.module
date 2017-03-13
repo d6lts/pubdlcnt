@@ -24,18 +24,6 @@ function pubdlcnt_filter($text, $nid) {
     return $text;
   }
 
-  return _filter_pubdlcnt($text, $nid);
-}
-
-/**
- * Parse whole node data and filter valid anchor tags.
- */
-function _filter_pubdlcnt($text, $nid) {
-  // Return if $nid is not specified:
-  if (!$nid) {
-    return $text;
-  }
-
   // 1. cross-platform line breaks to UNIX line breaks:
   $text = str_replace(array("\r\n", "\r"), "\n", $text);
 
@@ -92,9 +80,8 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
   // title="Sample">sample.zip</a>
   // $all: entire string .
   // $str1: start anchor tag: <a href="http... "title="Sample"> .
-  // $str2: inbetween content: sample.zip .
+  // $str2: in between content: sample.zip .
   // $str3: end anchor tag:    </a> .
-  global $user;
   $save_history = variable_get('pubdlcnt_save_history', 1);
 
   // Remove backslash before the double-quote:
@@ -246,22 +233,18 @@ function _pubdlcnt_count_bar($count, $max) {
  * Post rendering node contents.
  */
 function pubdlcnt_post_render($html, $build) {
-
-  $nid = $build['#node']->nid;
-  $html = _filter_pubdlcnt($html, $nid);
-  return $html;
+  return pubdlcnt_filter($html, $build['#node']->nid);
 }
 
 /**
  * Implements hook_node_view_alter().
  */
 function pubdlcnt_node_view_alter(&$build) {
-
   $nodetype = $build['#node']->type;
   $supported_nodetypes = variable_get('pubdlcnt_supported_nodetypes', array());
 
   $num_supported_nodetypes = 0;
-  foreach ($supported_nodetypes as $type => $value) {
+  foreach ($supported_nodetypes as $value) {
     if ($value != 0) {
       $num_supported_nodetypes++;
     }
@@ -414,7 +397,6 @@ function pubdlcnt_counter_form(
   $p2 = NULL,
   $p3 = NULL,
   $p4 = NULL) {
-  global $pager_page_array, $pager_total;
   $mode = PUBDLCNT_MODE_TOTAL;
   $name = $tgt_y = $tgt_m = $tgt_d = NULL;
 
@@ -760,13 +742,14 @@ function pubdlcnt_counter_form(
           'data' => _pubdlcnt_count_bar($count, $max),
           'align' => 'left',
         );
-        $row[] = array('data' => t(
-          '<a href="@path/@name/@y/@m">Detail</a>', array(
-            "@path" => base_path() . _pubdlcnt_language_prefix() . 'admin/reports/pubdlcnt/counter',
-            "@name" => $name,
-            "@y" => $y,
-            "@m" => $m,
-          )),
+        $row[] = array(
+          'data' => t(
+            '<a href="@path/@name/@y/@m">Detail</a>', array(
+              "@path" => base_path() . _pubdlcnt_language_prefix() . 'admin/reports/pubdlcnt/counter',
+              "@name" => $name,
+              "@y" => $y,
+              "@m" => $m,
+            )),
           'align' => 'left',
         );
         $rows[] = $row;
@@ -884,7 +867,6 @@ function pubdlcnt_export_form() {
  * Implements hook_submit().
  */
 function pubdlcnt_export_form_submit($form, &$form_state) {
-
   $op = $form_state['values']['op'];
   if ($op == t('Export')) {
     $export_mode = $form_state['values']['pubdlcnt_export_mode'];
@@ -894,11 +876,11 @@ function pubdlcnt_export_form_submit($form, &$form_state) {
 
     $file_path = file_directory_temp() . '/public_download_count_'
             . date('Y-m-d') . '.txt';
-    export_counter_file($file_path, $export_mode);
+    pubdlcnt_export_counter_file($file_path, $export_mode);
     if (!file_exists($file_path)) {
       die("Error: File $file_path does not exists.");
     }
-    if (!($fp = fopen($file_path, "r"))) {
+    if (!is_readable($file_path)) {
       die("Error: Can not open file $file_path for reading.");
     }
     if (($file_size = filesize($file_path)) == 0) {
@@ -938,7 +920,7 @@ function pubdlcnt_export_form_submit($form, &$form_state) {
  * @param int $export_mode
  *   Export mode, 0 for all data, 1 for a summary by downloaded file.
  */
-function export_counter_file($file_path, $export_mode) {
+function pubdlcnt_export_counter_file($file_path, $export_mode) {
 
   // Open the temporary file:
   if (!($fp = fopen($file_path, "w"))) {
@@ -1538,7 +1520,6 @@ function _pubdlcnt_generate_top_download_query($count = 10, $period = 0, $cfrom 
  *     path -- path to the statistics page, if allowed by permissions.
  */
 function theme_pubdlcnt_counter(array $variables) {
-  $type = $variables['type'];
   $value = $variables['value'];
   $path = $variables['path'];
 
@@ -1672,14 +1653,15 @@ function pubdlcnt_cron() {
  *
  * @param object $account
  *   Account accessing the page.
- * @param object|false $user
+ * @param object|false $check_user
  *   User who owns the page.
  */
-function pubdlcnt_user_page_access($account, $user = FALSE) {
-  if ($user == FALSE) {
+function pubdlcnt_user_page_access($account, $check_user = FALSE) {
+  if ($check_user == FALSE) {
     global $user;
+    $check_user = $user;
   }
-  return $user->uid == 1 || $account->uid == $user->uid;
+  return $check_user->uid == 1 || $account->uid == $check_user->uid;
 }
 
 /**
