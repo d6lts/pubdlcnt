@@ -77,10 +77,14 @@ if (pubdlcnt_is_valid_file_url($url)) {
   // Step 4: update counter data if URL was valid and file exists:
   $filename = basename($url);
   pubdlcnt_update_counter($url, $filename, $nid);
+
+  // Step 5: redirect to the original URL of the file:
+  header('Location: ' . $url);
+}
+else {
+  print "<pre>ERROR: Invalid download link.</pre>";
 }
 
-// Step 5: redirect to the original URL of the file:
-header('Location: ' . $url);
 exit;
 
 /**
