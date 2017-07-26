@@ -10,16 +10,20 @@ Public Download Count (pubdlcnt) 2.x
 See LICENSE.txt for licensing terms.
 
 
-Introduction
+INTRODUCTION
 ============
 
 Public Download Count is a module that keeps track of file download
-count.  Unlike Download Count module, this module is designed to work
-with Drupal's public file system. This module converts file URL in the
-any valid HTML anchor tags on the fly and use the external PHP program
-included in this module directory to keep track of file downloads. The
-target files are not necessary to be located under Drupal's
-installation directory but anywhere including external servers too.
+count.  This module differs from 'Download Count' in that it is
+designed to work with Drupal's public file system.  This module
+differs from 'File download count' in that it can track downloads from
+external sites (e.g., S3 buckets).
+
+This module converts file URL in the any valid HTML anchor tags on the
+fly and use the external PHP program included in this module directory
+to keep track of file downloads. The target files are not necessary to
+be located under Drupal's installation directory but anywhere
+including external servers too.
 
 If you want to protect your files in more secure way, or if you do not
 have any strong reasons that you need to use the public file system, I
@@ -76,7 +80,7 @@ criteria:
 
 
 How it works
-============
+------------
 
 This module keep track of file downloading operation and records the
 download count for each file (by file name) on daily basis.
@@ -102,25 +106,11 @@ the node types supported.
 
 NOTE: File download counter is incremented even if the downloading is
 aborted/cancelled in the middle. However, the counter would not be
-increased if the target file does not exists.
-
-
-Views support
-=============
-
-This module supports Views module to some levels. When you install
-this module and goes to the Views page, you may notice that "Public
-download count" group is added for filter, field, and
-relationships. For field and filter, file name, file URL, download
-count, last download time are available. To keep track the download
-count of the file listed in Views pages/blocks, this module uses theme
-template file 'pubdlcnt-views-view-field.tpl.php' in the views
-subdirectory. This template file makes it possible this module to
-convert anchor tags in any Views fields.
+increased if the target file does not exist.
 
 
 Customizing counter display
-===========================
+---------------------------
 
 Using phptemplate function, you can customize the download counter
 display in nodes and blocks. To do this create your own
@@ -129,14 +119,78 @@ file. You can find the sample in the sample-template.php file in this
 directory. The header and comment of the file explains more details.
 
 
+REQUIREMENTS
+============
 
-Design limitation and known issues
-==================================
+No special requeriments.
 
-* As I explained earlier, this module does not work well with the
-  anchor tag of image files handled by the lightbox module. Therefore,
-  this module does not count the image files handled by lightbox even
-  when .jpg, .png, .gif extensions are included to the valid
+
+RECOMMENDED MODULES
+===================
+
+* Views (https://www.drupal.org/project/views)
+  On the Views page, you will find that "Public download count" group
+  is added for filter, field, and relationships. For field and filter,
+  file name, file URL, download count, last download time are
+  available. To keep track the download count of the file listed in
+  Views pages/blocks, this module uses theme template file
+  'pubdlcnt-views-view-field.tpl.php' in the views subdirectory. This
+  template file makes it possible this module to convert anchor tags
+  in any Views fields.
+
+
+INSTALLATION
+============
+
+ * Install as you would normally install a contributed Drupal module. Visit:
+   https://drupal.org/documentation/install/modules-themes/modules-7
+   for further information.
+
+CONFIGURATION
+=============
+
+* Configure user permissions in Administration > People > Permissions:
+
+ - Administer Public Download Count module
+   Users with this permisson can view global statistics on all
+   download files and can reset download counts for specific files to
+   zero.
+
+ - View total download counts in nodes
+   Users with this permisson can see the total number of times a file
+   has been downloaded displayed next to the link to the file in
+   content nodes.
+
+ - View total download counts in block
+   Users with this permisson can see the number of times each file has
+   been downloaded when viewing the 'Top Downloads' block.
+
+* Customize module settings via Modules, then the configuration gear
+  at right of Public Download Count
+
+  - Configure the list of file extensions for which downloads should
+    be tracked
+
+  - Configure the list of node types on which downloads will be
+    tracked. If none are selected (the default), downloads will be
+    tracked on all nodes
+
+  - If desired, enable 'Skip duplicate download' to count one download
+    per IP per day
+
+  - If desired, disable 'Save download history records' to reduce the
+    amount of data stored for each file. This mode will track only the
+    total download count for each file and the time of the most recent
+    download.
+
+
+DESIGN LIMITATIONS AND KNOWN ISSUES
+===================================
+
+* As explained earlier, this module does not work well with the anchor
+  tag of image files handled by the lightbox module. Therefore, this
+  module does not count the image files handled by lightbox even when
+  .jpg, .png, .gif extensions are included to the valid
   extensions. (thickbox and shadowbox too). I think this would be OK
   since these anchor is used for displaying images instead of
   downloading image file.

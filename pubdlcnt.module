@@ -1038,7 +1038,7 @@ function pubdlcnt_permission() {
       'description' => '',
     ),
     'view total download count in block' => array(
-      'title' => 'View total dounload count in block',
+      'title' => 'View total download count in block',
       'description' => '',
     ),
   );
@@ -1284,6 +1284,27 @@ function pubdlcnt_block_view($delta = '') {
   $block['content'] = theme('item_list', array('items' => $items));
 
   return $block;
+}
+
+/**
+ * Implements hook_help().
+ */
+function pubdlcnt_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#pubdlcnt':
+      return
+      "<p>This module keep track of file downloading operation and records the download count for each file (by file name) on daily basis.</p>
+
+<p>You can either enable/disable the 'save history record' option at the module's configuration page. If this option is enabled, you can see the stastics of download count for each file by daily, monthly or even yearly later.  If this option is disabled, it only keeps track of the accumulated download counter and the last download date.</p>
+
+<p>When you install and enable this module, this module adds two pages, one under site configuration and the other one under report section of administer site.</p>
+
+<p>The report page of this module shows the summary of download count for all the files and you can see the summary of each file in a separate page. You can also download the counter data as a tab separated text file using the Export feature of this module.</p>
+
+<p>The configration page of this module let you specify optional settings including the extension of the file name you want to keep track of and the node types supported.</p>
+
+<p>NOTE: File download counter is incremented even if the downloading is aborted/cancelled in the middle. However, the counter would not be increased if the target file does not exist.</p>";
+  }
 }
 
 /**
