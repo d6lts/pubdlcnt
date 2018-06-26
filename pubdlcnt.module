@@ -1545,7 +1545,10 @@ function theme_pubdlcnt_counter(array $variables) {
   $path = $variables['path'];
 
   if ($path) {
-    $output = ' ' . l($value, $path);
+    $output = ' ' . t('(<a href="@path">@value</a>)', array(
+      "@value" => $value,
+      "@path" => $path,
+    ));
   }
   else {
     $output = ' ' . t('(@value)', array("@value" => $value));
