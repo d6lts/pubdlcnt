@@ -48,6 +48,7 @@ else {
   if (!file_exists('./includes/bootstrap.inc')) {
     // We can not locate the bootstrap.inc file, let's give up using the
     // script and just fetch the file:
+    header('Cache-Control: max-age=0');
     header('Location: ' . $_GET['file']);
     exit;
   }
@@ -79,6 +80,7 @@ if (pubdlcnt_is_valid_file_url($url)) {
   pubdlcnt_update_counter($url, $filename, $nid);
 
   // Step 5: redirect to the original URL of the file:
+  header('Cache-Control: max-age=0');
   header('Location: ' . $url);
 }
 else {
