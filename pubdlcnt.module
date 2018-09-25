@@ -1545,13 +1545,14 @@ function theme_pubdlcnt_counter(array $variables) {
   $path = $variables['path'];
 
   if ($path) {
-    $output = ' ' . t('(<a href="@path">@value</a>)', array(
-      "@value" => $value,
-      "@path" => $path,
-    ));
+    $output = ' ' . format_string(
+        '(<a href="!path">@value</a>)', array(
+          "@value" => $value,
+          "!path" => check_url($path),
+        ));
   }
   else {
-    $output = ' ' . t('(@value)', array("@value" => $value));
+    $output = ' ' . format_string('(@value)', array("@value" => $value));
   }
   return $output;
 }
