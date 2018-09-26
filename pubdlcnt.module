@@ -29,7 +29,7 @@ function pubdlcnt_filter($text, $nid) {
 
   // 2. convert anchor tag:
   $new_text = preg_replace_callback(
-    '/(<a .*?>)(.*?)(<\/a>)/is',
+    '/(<a\s.*?>)(.*?)(<\/a>)/is',
     function ($matches) use ($nid) {
       return _pubdlcnt_replace_anchor_url(
         $matches[0],
@@ -95,7 +95,7 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
     return $all;
   }
 
-  preg_match('/(<a .*?href=["\'])(.*?)(["\'].*?>)/is', $str1, $matches);
+  preg_match('/(<a\s.*?href=["\'])(.*?)(["\'].*?>)/is', $str1, $matches);
 
   // Example:
   // <a href="http://www.pixture.com/files/sample.zip" title="Sample">
