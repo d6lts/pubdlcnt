@@ -176,10 +176,28 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
       ));
     }
   }
-  $matches[2] = base_path() . drupal_get_path('module', 'pubdlcnt') .
-          "/pubdlcnt.php?file=$matches[2]&nid=$nid";
 
-  $out = $matches[1] . $matches[2] . $matches[3] . $str2 . $str3;
+  $fid = db_query(
+    "SELECT fid FROM {pubdlcnt} WHERE url=:url",
+    [':url' => $matches[2]]
+  )->fetchField();
+  if (empty($fid)) {
+    $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
+    $fid = db_insert('pubdlcnt')
+      ->fields(array(
+        'nid' => $nid,
+        'name' => $filename,
+        'url' => $matches[2],
+        'count' => 0,
+        'utime' => $today,
+      ))->execute();
+  }
+
+  $dlcnt_path = base_path() .
+      drupal_get_path('module', 'pubdlcnt') .
+      "/pubdlcnt.php?fid=" . $fid;
+
+  $out = $matches[1] . $dlcnt_path . $matches[3] . $str2 . $str3;
 
   return $out;
 }

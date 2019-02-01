@@ -6,10 +6,7 @@
  *
  * @ingroup pubdlcnt
  *
- * Usage:  pubdlcnt.php?file=http://server/path/file.ext
- *
- * Requirement: PHP5 - get_headers() function is used
- *              (The script works fine with PHP4 but better with PHP5)
+ * Usage:  pubdlcnt.php?fid={file_id}
  *
  * NOTE: we can not use variable_get() function from this external PHP program
  *   since variable_get() depends on Drupal's internal global variable.
@@ -46,10 +43,6 @@ else {
   chdir('/absolute-path-to-drupal-root/');
 
   if (!file_exists('./includes/bootstrap.inc')) {
-    // We can not locate the bootstrap.inc file, let's give up using the
-    // script and just fetch the file:
-    header('Cache-Control: max-age=0');
-    header('Location: ' . $_GET['file']);
     exit;
   }
 }
@@ -63,9 +56,26 @@ include_once DRUPAL_ROOT . '/modules/filter/filter.module';
 drupal_bootstrap(DRUPAL_BOOTSTRAP_DATABASE);
 chdir($current_dir);
 
-// Step 2: Get file query value (URL of the actual file to be downloaded.
-$url = check_url($_GET['file']);
-$nid = check_url($_GET['nid']);
+// Step 2: Get file query value (fid of the file todownload)
+if (!isset($_GET["fid"])) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: no file specified for donwload.</pre>";
+  exit;
+}
+
+// Check that the fid given is valid:
+$rec = db_query(
+    "SELECT * FROM {pubdlcnt} WHERE fid=:fid",
+    [':fid' => $_GET["fid"]]
+)->fetchObject();
+if ($rec === FALSE) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: invalid fid provided.</pre>";
+  exit;
+}
+
+$url = $rec->url;
+$nid = $rec->nid;
 
 // Is this an absolute url?
 if (!preg_match("%^(f|ht)tps?://.*%i", $url)) {
@@ -74,20 +84,31 @@ if (!preg_match("%^(f|ht)tps?://.*%i", $url)) {
 }
 
 // Step 3: Check that the URL is valid:
-if (pubdlcnt_is_valid_file_url($url)) {
-  // Step 4: update counter data if URL was valid and file exists:
-  $filename = basename($url);
-  pubdlcnt_update_counter($url, $filename, $nid);
-
-  // Step 5: redirect to the original URL of the file:
-  header('Cache-Control: max-age=0');
-  header('Location: ' . $url);
-}
-else {
-  print "<pre>ERROR: Invalid download link.</pre>";
+if (!pubdlcnt_is_valid_file_url($url)) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: Invalid download url.</pre>";
+  exit;
 }
 
-exit;
+// Step 4: If this is an external link and referer is also external, refuse to
+// redirect to prevent an open redirect vulnerability.
+$tgt_domain = parse_url($url, PHP_URL_HOST);
+$referer = isset($_SERVER["HTTP_REFERER"]) ?
+    parse_url($_SERVER["HTTP_REFERER"], PHP_URL_HOST) :
+    FALSE;
+if ($tgt_domain != $_SERVER['SERVER_NAME'] &&
+    $referer != $_SERVER['SERVER_NAME']) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>Refusing to redirect to external site.</pre>";
+  exit;
+}
+
+// Step 5: At this point, request must be valid. Update counter data.
+pubdlcnt_update_counter($rec->fid);
+
+// Step 6: redirect to the original URL of the file:
+header('Cache-Control: max-age=0');
+header('Location: ' . $url);
 
 /**
  * Function to check if the specified file URL is valid or not.
@@ -153,18 +174,13 @@ function pubdlcnt_is_valid_file_url(string $url) {
 /**
  * Function to check duplicate download from the same IP address within a day.
  *
- * @param string $url
- *   Url to check.
- * @param string $name
- *   Name of file being downloaded.
- * @param int $nid
- *   Id of node where download started.
+ * @param int $fid
+ *   Id of file being downloaded.
  *
  * @return int
  *   0 - OK,  1 - duplicate (skip counting)
  */
-function pubdlcnt_check_duplicate(string $url, string $name, int $nid) {
-
+function pubdlcnt_check_duplicate(int $fid) {
   // Get the settings:
   $result = db_query("SELECT value FROM {variable} WHERE name = :name",
                      array(':name' => 'pubdlcnt_skip_duplicate'))->fetchField();
@@ -174,136 +190,68 @@ function pubdlcnt_check_duplicate(string $url, string $name, int $nid) {
   }
 
   // OK, we should check the duplicate download:
-  $ip = ip_address();
-  if (!preg_match("/^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/", $ip)) {
+  $ip = filter_var(ip_address(), FILTER_VALIDATE_IP);
+  if ($ip === FALSE) {
     // Invalid IPv4 address:
     return 1;
   }
+
   // Unix timestamp:
   $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
 
-  // Obtain fid:
-  $fid = db_query("SELECT fid FROM {pubdlcnt} WHERE name=:name", array(':name' => $name))->fetchField();
-  if ($fid) {
-    $result = db_query("SELECT * FROM {pubdlcnt_ip} WHERE fid=:fid AND ip=:ip AND utime=:utime", array(
-      ':fid' => $fid,
-      ':ip' => $ip,
-      ':utime' => $today,
-    ));
-    if ($result->rowCount()) {
-      // Found duplicate!
-      return 1;
-    }
-    else {
-      // Add IP address to the database:
-      db_insert('pubdlcnt_ip')
-        ->fields(array(
-          'fid' => $fid,
-          'ip' => $ip,
-          'utime' => $today,
-        ))->execute();
-    }
+  $result = db_query(
+      "SELECT * FROM {pubdlcnt_ip} WHERE fid=:fid AND ip=:ip AND utime=:utime", [
+        ':fid' => $fid,
+        ':ip' => $ip,
+        ':utime' => $today,
+      ]);
+  if ($result->rowCount()) {
+    // Found duplicate!
+    return 1;
   }
-  else {
-    // No file record -> create file record first:
-    $fid = db_insert('pubdlcnt')
-      ->fields(array(
-        'nid' => $nid,
-        'name' => $name,
-        'url' => $url,
-        'count' => 0,
-        'utime' => $today,
-      ))->execute();
-    // Next, add IP address to the database:
-    db_insert('pubdlcnt_ip')
-      ->fields(array(
-        'fid' => $fid,
-        'ip' => $ip,
-        'utime' => $today,
-      ))->execute();
-  }
+
+  // Add IP address to the database:
+  db_insert('pubdlcnt_ip')
+    ->fields([
+      'fid' => $fid,
+      'ip' => $ip,
+      'utime' => $today,
+    ])->execute();
+
   return 0;
 }
 
 /**
  * Function to update the data base with new counter value.
  *
- * @param string $url
- *   Url being downloaded.
- * @param string $name
- *   Name of file being downloaded.
- * @param int $nid
- *   Id of node file was downloaded from.
+ * @param int $fid
+ *   Id of file being downloaded.
  */
-function pubdlcnt_update_counter(string $url, string $name, int $nid) {
-  // Check if nid is invalid:
-  if (empty($nid)) {
-    return;
-  }
-
+function pubdlcnt_update_counter(int $fid) {
   // Check the duplicate download from the same IP and skip updating counter:
-  if (pubdlcnt_check_duplicate($url, $name, $nid)) {
+  if (pubdlcnt_check_duplicate($fid)) {
     return;
   }
 
-  $count = 1;
-
-  // Today(00:00:00AM) in Unix time:
-  $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
-
-  // Obtain fid:
-  $result = db_query("SELECT fid, count FROM {pubdlcnt} WHERE name=:name", array(':name' => $name));
-  if (!$result->rowCount()) {
-    // No file record -> create file record first:
-    $fid = db_insert('pubdlcnt')
-      ->fields(array(
-        'nid'   => $nid,
-        'name'  => $name,
-        'url'   => $url,
-        'count' => 1,
-        'utime' => $today,
-      ))->execute();
-  }
-  else {
-    $rec = $result->fetchObject();
-    $fid = $rec->fid;
-    // Update total counter:
-    $total_count = $rec->count + 1;
-    db_update('pubdlcnt')
-      ->fields(array(
-        'nid'   => $nid,
-        'url'   => $url,
-        'count' => $total_count,
-        'utime' => $today,
-      ))->condition('fid', $rec->fid)
-      ->execute();
-  }
+  db_update('pubdlcnt')
+    ->expression('count', 'count + 1')
+    ->condition('fid', $fid)
+    ->execute();
 
   // Get the settings:
-  $result = db_query("SELECT value FROM {variable} WHERE name=:name",
-                      array(':name' => 'pubdlcnt_save_history'))->fetchField();
+  $result = db_query(
+      "SELECT value FROM {variable} WHERE name=:name",
+      [':name' => 'pubdlcnt_save_history']
+  )->fetchField();
   $save_history = unserialize($result);
 
   if ($save_history) {
-    $count = db_query("SELECT count FROM {pubdlcnt_history} WHERE fid=:fid AND utime=:utime",
-                     array(':fid' => $fid, ':utime' => $today))->fetchField();
-    if ($count) {
-      $count++;
-      // Update an existing record:
-      db_update('pubdlcnt_history')
-        ->fields(array('count' => $count))
-        ->condition('fid', $fid)
-        ->condition('utime', $today)
-        ->execute();
-    }
-    else {
-      // Insert a new record:
-      db_insert('pubdlcnt_history')
-        ->fields(array(
-          'fid' => $fid,
-          'utime' => $today,
-          'count' => 1,
-        ))->execute();
-    }
+    $today = mktime(0, 0, 0, date("m"), date("d"), date("Y"));
+
+    db_merge('pubdlcnt_history')
+      ->key(['fid' => $fid, 'utime' => $today])
+      ->fields(['count' => 1])
+      ->expression('count', 'count + 1')
+      ->execute();
   }
 }
