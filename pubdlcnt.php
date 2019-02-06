@@ -8,7 +8,7 @@
  *
  * @ingroup pubdlcnt
  *
- * Usage:  pubdlcnt.php?file=http://server/path/file.ext
+ * Usage:  pubdlcnt.php?fid={file_id}
  *
  * Requirement: PHP5 - get_headers() function is used
  *              (The script works fine with PHP4 but better with PHP5)
@@ -48,9 +48,6 @@ else {
   chdir('/absolute-path-to-drupal-root/'); // <---- edit this line!
 
   if (!file_exits('./includes/bootstrap.inc')) {
-    // We can not locate the bootstrap.inc file, let's give up using the
-    // script and just fetch the file
-    header('Location: ' . $_GET['file']);
     exit;
   }
 }
@@ -63,10 +60,27 @@ drupal_bootstrap(DRUPAL_BOOTSTRAP_DATABASE);
 chdir($current_dir);
 
 /**
- * Step-2: get file query value (URL of the actual file to be downloaded)
+ * Step 2: Get file query value (fid of the file todownload)
  */
-$url = check_url($_GET['file']);
-$nid = check_url($_GET['nid']);
+
+if (!isset($_GET["fid"])) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: no file specified for donwload.</pre>";
+  exit;
+}
+
+// Check that the fid given is valid:
+$rec = db_fetch_object(db_query(
+    "SELECT * FROM {pubdlcnt} WHERE id=%d",
+    $_GET["fid"]));
+if ($rec === FALSE) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: invalid fid provided.</pre>";
+  exit;
+}
+
+$url = $rec->name;
+$nid = $rec->nid;
 
 if (!eregi("^(f|ht)tps?:\/\/.*", $url)) { // check if this is absolute URL 
   // if the URL is relative, then convert it to absolute
@@ -76,13 +90,16 @@ if (!eregi("^(f|ht)tps?:\/\/.*", $url)) { // check if this is absolute URL
 /**
  * Step-3: check if the url is valid or not
  */
-if (is_valid_file_url($url)) {
-  /**
-   * Step-4: update counter data (only if the URL is valid and file exists)
-   */
-  $filename = basename($url);
-  pubdlcnt_update_counter($filename, $nid);
+if (!is_valid_file_url($url)) {
+  header($_SERVER["SERVER_PROTOCOL"] . " 400 Bad Request");
+  print "<pre>ERROR: Invalid download url.</pre>";
 }
+
+/**
+ * Step-4: update counter data (only if the URL is valid and file exists)
+ */
+$filename = basename($url);
+pubdlcnt_update_counter($filename, $nid);
 
 /**
  * Step-5: redirect to the original URL of the file

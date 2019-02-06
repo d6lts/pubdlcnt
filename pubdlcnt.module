@@ -150,10 +150,22 @@ function _pubdlcnt_replace_anchor_url($all, $str1, $str2, $str3, $nid) {
       $str3 = $str3 . ' (' . $cnt . ')';
     }
   }
-  $matches[2] = base_path() . drupal_get_path('module', 'pubdlcnt') .
-          "/pubdlcnt.php?file=$matches[2]&nid=$nid";
 
-  $out = $matches[1] . $matches[2] . $matches[3] . $str2 . $str3;
+  $fid = db_result(db_query(
+    "SELECT id FROM {pubdlcnt} WHERE name='%s'",
+    $matches[2]));
+  if (empty($fid)) {
+    $today = gmdate('Y-m-d H:i:s');
+    db_query("INSERT INTO {pubdlcnt} (nid, name, count, date) VALUES (%d, '%s', %d, '%s')",
+      $nid, $matches[2], 0, $today);
+    $fid = db_last_insert_id('pubdlcnt', 'id');
+  }
+
+  $dlcnt_path = base_path() .
+      drupal_get_path('module', 'pubdlcnt') .
+      "/pubdlcnt.php?fid=" . $fid;
+
+  $out = $matches[1] . $dlcnt_path . $matches[3] . $str2 . $str3;
 
   return $out;  
 }
