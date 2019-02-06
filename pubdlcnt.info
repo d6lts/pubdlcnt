@@ -2,3 +2,9 @@
 name = Public Download Count
 description = "Provides file download counter for the Drupal's public file system."
 core = 6.x
+
+; Information added by Drupal 6 LTS vendors on 2019-02-06
+version = "6.x-1.0-beta6"
+core = "6.x"
+project = "pubdlcnt"
+datestamp = "1549476881"
